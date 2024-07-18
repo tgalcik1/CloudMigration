@@ -19,13 +19,13 @@ export default {
   data() {
     return {
       remainingTime: 10,
-      isVisible: true
+      isVisible: true,
+      hueRotation: 0,
+      isResetting: false
     };
   },
   mounted() {
     this.startTimer();
-    // window.api.send('toMain', { command: 'update-task', task: 'baseline' });
-
     this.$store.commit('collapseSidebar');
 
     // Fade out navbar and footer
@@ -35,6 +35,8 @@ export default {
     setTimeout(() => {
       this.$refs.videoWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0)';
     }, 10);
+
+    this.startHueRotation();
   },
   methods: {
     startTimer() {
@@ -44,8 +46,8 @@ export default {
           if (this.remainingTime === 2) {
             this.fadeBack();
             // Fade in navbar and footer
-            console.log('Emitting toggle-navbar-footer event with true');
             this.$emit('toggle-navbar-footer', true);
+            this.startSmoothReset();
           }
         } else {
           clearInterval(this.interval);
@@ -61,11 +63,40 @@ export default {
     },
     fadeBack() {
       this.$refs.videoWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    },
+    startHueRotation() {
+      this.hueInterval = setInterval(() => {
+        if (!this.isResetting) {
+          this.hueRotation = (this.hueRotation + 1) % 360;
+          this.$refs.videoWrapper.style.backdropFilter = `hue-rotate(${this.hueRotation}deg)`;
+        }
+      }, 100);
+    },
+    startSmoothReset() {
+      this.isResetting = true;
+      const resetInterval = 20;
+      const steps = 2000 / resetInterval;
+      const decrement = this.hueRotation / steps;
+      let currentStep = 0;
+      this.resetInterval = setInterval(() => {
+        if (currentStep < steps) {
+          this.hueRotation -= decrement;
+          this.$refs.videoWrapper.style.backdropFilter = `hue-rotate(${this.hueRotation}deg)`;
+          currentStep++;
+        } else {
+          clearInterval(this.resetInterval);
+          this.hueRotation = 0;
+          this.$refs.videoWrapper.style.backdropFilter = `hue-rotate(0deg)`;
+          this.isResetting = false;
+        }
+      }, resetInterval);
     }
   },
   beforeUnmount() {
     window.api.send('toMain', { command: 'stop-data-collection' });
     clearInterval(this.interval);
+    clearInterval(this.hueInterval);
+    clearInterval(this.resetInterval);
   }
 };
 </script>
