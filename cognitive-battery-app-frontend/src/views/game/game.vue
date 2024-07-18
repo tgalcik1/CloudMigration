@@ -1,6 +1,9 @@
 <template>
-  <div class="game-container">
-    <iframe ref="gameIframe" :src="gameUrl" frameborder="0" class="game-iframe"></iframe>
+  <div class="game-wrapper">
+    <div class="game-container">
+      <!-- <iframe ref="gameIframe" class="game-iframe" frameborder="0" src="https://itch.io/embed-upload/8647397?color=333333" allowfullscreen=""><a href="https://tjgalcik.itch.io/fps-animations">Play FPS Animations on itch.io</a></iframe> -->
+      <iframe ref="gameIframe" :src="gameUrl" frameborder="0" class="game-iframe"></iframe>
+    </div>
   </div>
 </template>
 
@@ -46,9 +49,11 @@ export default {
 </script>
 
 <style scoped>
+
 .game-iframe {
+  margin-top: 60px;
   width: 100%;
-  height: 88vh;
+  height: calc(100vh - 120px);
   border: none;
 }
 </style>

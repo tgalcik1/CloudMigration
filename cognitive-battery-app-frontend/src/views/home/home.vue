@@ -1,11 +1,11 @@
 <template>
-  <div class="home-container">
-    <h1>Home Page</h1>
-    <ul>
-      <li v-for="route in filteredRoutes" :key="route.path">
-        <router-link :to="route.path">{{ route.name || route.path }}</router-link>
-      </li>
-    </ul>
+  <div class="home-wrapper">
+    <div :class="homeContainerClass">
+      <h1>Welcome</h1>
+      <p>Welcome to the study, and thank you for your participation.</p>
+      <p>You will be guided through various preliminary steps before beginning the main experiment.</p>
+      <router-link to="/presurvey" class="start-button">Start</router-link>
+    </div>
   </div>
 </template>
 
@@ -13,36 +13,48 @@
 export default {
   data() {
     return {
-      routes: []
+      homeContainerClass: 'home-container-hidden'
     };
   },
-  computed: {
-    filteredRoutes() {
-      return this.routes.filter(route => !route.meta.hidden);
-    }
-  },
   mounted() {
-    this.routes = this.$router.getRoutes().filter(route => route.name);
+    setTimeout(() => {
+      this.homeContainerClass = 'home-container';
+    }, 500);
   }
 };
 </script>
 
 <style scoped>
+.home-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
 .home-container {
-  padding: 1em;
+  text-align: center;
+  margin-bottom: 10%;
+  opacity: 1.0;
+  transition: opacity 2s ease;
 }
 
-ul {
-  list-style-type: none;
-  padding: 0;
+.home-container-hidden {
+  opacity: 0;
 }
 
-li {
-  margin: 0.5em 0;
-}
-
-a {
+.start-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #42b983;
+  color: white;
   text-decoration: none;
-  color: #42b983;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.start-button:hover {
+  background-color: #339267;
 }
 </style>

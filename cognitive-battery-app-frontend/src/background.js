@@ -2,7 +2,7 @@ const { ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
 const { spawn, exec } = require('child_process');
-import { app, protocol, BrowserWindow } from 'electron';
+import { app, protocol, BrowserWindow, screen } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -13,9 +13,12 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 async function createWindow() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: width,
+    height: height,
     webPreferences: {
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
@@ -136,17 +139,17 @@ function startDataCollection(subjectId, device, task, event) {
 
   eyeProcess.stdout.on('data', (data) => {
     console.log(`[IPC MAIN] record_eye stdout: ${data}`);
-    event.reply('fromMain', { status: `record_eye output: ${data.toString()}` });
+    event.reply('fromMain', { status: `Record_eye output: ${data.toString()}` });
   });
 
   eyeProcess.stderr.on('data', (data) => {
     console.error(`[IPC MAIN] record_eye stderr: ${data}`);
-    event.reply('fromMain', { error: `record_eye error: ${data.toString()}` });
+    event.reply('fromMain', { error: `Record_eye error: ${data.toString()}` });
   });
 
   eyeProcess.on('close', (code) => {
     console.log(`record_eye process exited with code ${code}`);
-    event.reply('fromMain', { status: `record_eye exited with code ${code}` });
+    event.reply('fromMain', { status: `Record_eye exited with code ${code}` });
   });
 
   const recordSensorPath = path.join(scriptPath, filename);
@@ -154,23 +157,23 @@ function startDataCollection(subjectId, device, task, event) {
 
   sensorProcess.stdout.on('data', (data) => {
     console.log(`record_sensor stdout: ${data}`);
-    event.reply('fromMain', { status: `record_sensor output: ${data.toString()}` });
+    event.reply('fromMain', { status: `Record_sensor output: ${data.toString()}` });
   });
 
   sensorProcess.stderr.on('data', (data) => {
     console.error(`record_sensor stderr: ${data}`);
-    event.reply('fromMain', { error: `record_sensor error: ${data.toString()}` });
+    event.reply('fromMain', { error: `Record_sensor error: ${data.toString()}` });
   });
 
   sensorProcess.on('close', (code) => {
     console.log(`record_sensor process exited with code ${code}`);
-    event.reply('fromMain', { status: `record_sensor exited with code ${code}` });
+    event.reply('fromMain', { status: `Record_sensor exited with code ${code}` });
   });
 
   ipcMain.once('stop-data-collection', () => {
     eyeProcess.kill();
     sensorProcess.kill();
-    event.reply('fromMain', { status: 'data collection stopped' });
+    event.reply('fromMain', { status: 'Data collection stopped' });
   });
 }
 

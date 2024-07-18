@@ -4,7 +4,8 @@ import router from '../router/router';
 export default createStore({
   state: {
     subjectId: localStorage.getItem('user') || null,
-    selectedEcgDevice: localStorage.getItem('ecgDevice') || 'ecg1'
+    selectedEcgDevice: localStorage.getItem('ecgDevice') || 'ecg1',
+    isSidebarCollapsed: true
   },
   mutations: {
     setSubjectId(state, subjectId) {
@@ -24,6 +25,12 @@ export default createStore({
       } else {
         localStorage.removeItem('ecgDevice');
       }
+    },
+    toggleSidebar(state) {
+      state.isSidebarCollapsed = !state.isSidebarCollapsed;
+    },
+    collapseSidebar(state) {
+      state.isSidebarCollapsed = true;
     }
   },
   actions: {
@@ -32,10 +39,14 @@ export default createStore({
     },
     logout({ commit }) {
       commit('setSubjectId', null);
+      commit('collapseSidebar');
       router.push('/signin');
     },
     selectEcgDevice({ commit }, device) {
       commit('setSelectedEcgDevice', device);
+    },
+    toggleSidebar({ commit }) {
+      commit('toggleSidebar');
     }
   }
 });

@@ -11,49 +11,49 @@ import GameView from '@/views/game/game.vue';
 const routes = [
   {
     path: '/',
-    name: 'home',
+    name: 'Welcome',
     component: Home,
-    meta: { requiresAuth: true, hidden: true }
+    meta: { requiresAuth: true }
   },
   {
     path: '/signin',
-    name: 'signin',
+    name: 'Sign In',
     component: Signin,
     meta: { hidden: true }
   },
   {
     path: '/presurvey',
-    name: 'presurvey',
+    name: 'Pre-Survey',
     component: Presurvey,
     meta: { requiresAuth: true }
   },
   {
     path: '/setup',
-    name: 'setup',
+    name: 'Setup',
     component: Setup,
     meta: { requiresAuth: true }
   },
   {
     path: '/baseline',
-    name: 'baseline',
+    name: 'Baseline',
     component: Baseline,
     meta: { requiresAuth: true }
   },
   {
     path: '/video',
-    name: 'video',
+    name: 'Video',
     component: Video,
     meta: { requiresAuth: true, hidden: true }
   },
   {
     path: '/instructions',
-    name: 'instructions',
+    name: 'Instructions',
     component: Instructions,
     meta: { requiresAuth: true, hidden: true }
   },
   {
     path: '/game',
-    name: 'game',
+    name: 'Game',
     component: GameView,
     meta: { requiresAuth: true }
   }

@@ -1,49 +1,35 @@
 <template>
+  <div class="setup-wrapper">
     <div class="setup-container">
       <h1>Setup</h1>
       <div class="content">
-        <div class="sidebar">
-          <aside>Follow these steps to complete the setup.</aside>
-          <ul class="step-list">
-            <li :class="{ active: currentStepIndex === 0 }">
-              <a href="#" @click.prevent="openStep(0)">1. ECG Setup</a>
-            </li>
-            <li :class="{ active: currentStepIndex === 1 }">
-              <a href="#" @click.prevent="openStep(1)">2. Signal Quality Check</a>
-            </li>
-            <li :class="{ active: currentStepIndex === 2 }">
-              <a href="#" @click.prevent="openStep(2)">3. Eye Tracking Calibration</a>
-            </li>
-          </ul>
-          <div class="navigation-buttons">
-            <button @click="previousStep" :disabled="currentStepIndex === 0">Previous</button>
-            <button @click="nextStepOrComplete">{{ currentStepIndex === steps.length - 1 ? 'Complete Setup' : 'Next' }}</button>
-          </div>
-        </div>
         <div class="step-content" v-if="currentStep">
           <!-- Step 1: ECG device selection -->
+          <div style="margin-top: -32px; margin-bottom: 32px" v-if="currentStepIndex === 0"><p style="color: rgb(180, 180, 180)">Select the device being used for this study.</p></div>
           <div v-if="currentStepIndex === 0" class="device-instructions">
-            <div :class="['device', { 'grayed-out': selectedEcgDevice !== 'arduino' }]">
-              <button @click="selectEcgDevice('arduino')" :class="{ active: selectedEcgDevice === 'arduino' }">3-Lead ECG</button>
+            
+
+            <div @click="selectEcgDevice('arduino')" :class="['device', { 'grayed-out': selectedEcgDevice !== 'arduino' }]">
+              <button  :class="{ active: selectedEcgDevice === 'arduino' }">3-Lead ECG</button>
               <img src="images/ecg-diagram.png" alt="3-Lead ECG Device Setup" class="step-image">
-              <p>Attach the three electrodes as shown in the diagram.</p>
+              <p style="color: rgba(80,80,80,1)">Attach the three electrodes as shown in the diagram.</p>
             </div>
-            <div :class="['device', { 'grayed-out': selectedEcgDevice !== 'movesense' }]">
-              <button @click="selectEcgDevice('movesense')" :class="{ active: selectedEcgDevice === 'movesense' }">Movesense ECG</button>
+            <div @click="selectEcgDevice('movesense')" :class="['device', { 'grayed-out': selectedEcgDevice !== 'movesense' }]">
+              <button :class="{ active: selectedEcgDevice === 'movesense' }">Movesense MD Sensor</button>
               <img src="images/movesense.jpg" alt="Movesense ECG Device Setup" class="step-image">
-              <p>Wrap the strap around your chest, ensuring the electrodes make firm contact with your skin.</p>
+              <p style="color: rgba(80,80,80,1)">Wrap the strap around your chest, ensuring the electrodes make firm contact with your skin.</p>
             </div>
-            <div :class="['device', { 'grayed-out': selectedEcgDevice !== 'ecg3' }]">
-              <button @click="selectEcgDevice('ecg3')" :class="{ active: selectedEcgDevice === 'ecg3' }">ECG Device 3</button>
+            <div @click="selectEcgDevice('ecg3')" :class="['device', { 'grayed-out': selectedEcgDevice !== 'ecg3' }]">
+              <button :class="{ active: selectedEcgDevice === 'ecg3' }">ECG Device 3</button>
               <img src="path/to/ecg-image-3.jpg" alt="ECG Device 3" class="step-image">
-              <p>(insert directions for ECG device here)</p>
+              <p style="color: rgba(80,80,80,1)">(insert directions for ECG device here)</p>
             </div>
           </div>
 
           <!-- Step 2: signal quality check -->
           <div v-else-if="currentStepIndex === 1">
-            <button @click="signalQualityCheck()">Check Signal Quality</button>
-            <p>Please wait while a research assistant checks the signal quality.</p>
+            <p style="margin-top: -16px; margin-bottom: 32px; color: rgb(180, 180, 180)">Please wait while a research assistant checks the signal quality.</p>
+            <button class="connect-button" @click="signalQualityCheck()">Connect</button>
           </div>
 
           <!-- other steps -->
@@ -53,9 +39,16 @@
               <img :src="currentStep.image" alt="Step Image" class="step-image">
             </div>
           </div>
+
+          <div class="navigation-buttons">
+            <button @click="previousStep" :disabled="currentStepIndex === 0">Previous</button>
+            <button @click="nextStepOrComplete">{{ currentStepIndex === steps.length - 1 ? 'Complete Setup' : 'Next' }}</button>
+          </div>
+
         </div>
       </div>
     </div>
+  </div>
   </template>
   
   <script>
@@ -141,12 +134,20 @@
     margin: 0;
     padding: 0;
   }
+
+  .setup-wrapper{
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
   
   .setup-container {
     padding: 1em;
     display: flex;
     flex-direction: column;
-    height: 100%;
   }
   
   .content {
@@ -157,7 +158,7 @@
   
   .sidebar {
     width: 300px;
-    background-color: #454545;
+    background-color: #3f4346;
     color: white;
     padding: 1em;
     border-radius: 5px;
@@ -188,17 +189,32 @@
   .navigation-buttons button {
     margin: 5px;
     padding: 10px;
-    border: 1px solid #ccc;
     border-radius: 5px;
+    border: none;
     cursor: pointer;
-    width: 45%;
+    width: 100px;
     text-align: center;
+    font-family: "Monda", sans-serif;
+    transition: background-color 0.2s ease;
+  }
+
+  .navigation-buttons button:hover {
+    background-color: #a3a3a3;
+  }
+
+  .navigation-buttons button:disabled{
+    background-color: rgba(255,255,255,0.3);
+  }
+
+  .navigation-buttons button:disabled:hover{
+    cursor: not-allowed;
+    background-color: rgba(255,255,255,0.3);
   }
   
   .step-content {
     flex-grow: 1;
     margin-left: 20px;
-    width: 500px;
+    width: 80vw;
   }
   
   .device-instructions {
@@ -210,10 +226,15 @@
   .device {
     flex: 1;
     padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border: 6px solid #42b983;
+    border-radius: 16px;
     text-align: center;
     background: white;
+    transition: border 0.3s ease;
+  }
+
+  .device:hover{
+    cursor: pointer;
   }
   
   .device button {
@@ -231,6 +252,7 @@
   }
   
   .grayed-out {
+    border: 6px solid white;
     opacity: 0.35;
     filter: grayscale(100%);
   }
@@ -238,6 +260,29 @@
   .step-image {
     max-width: 100%;
     height: auto;
+  }
+
+  button{
+    font-family: "Monda", sans-serif;
+  }
+
+  .connect-button{
+    margin: 5px;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100px;
+    text-align: center;
+    font-family: "Monda", sans-serif;
+    background-color:#42b983;
+    color: white;
+    transition: background-color 0.3s ease;
+  }
+
+  .connect-button:hover{
+    background-color: #339267;
+    cursor: pointer;
   }
   </style>
   

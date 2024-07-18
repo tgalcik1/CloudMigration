@@ -1,99 +1,83 @@
 <template>
-  <div class="presurvey-container">
-    <h1>Pre-Survey</h1>
-    <div class="content">
-      <div class="sidebar">
-        <aside v-if="selectingSurveys">Select the surveys you want to complete:</aside>
-        <aside v-else>Please complete the following surveys:</aside>
-        <ul class="survey-list" v-if="selectingSurveys">
-          <li v-for="(survey, index) in surveys" :key="index">
-            <input type="checkbox" v-model="survey.selected" />
-            {{ index + 1 }}. {{ survey.title }}
-          </li>
-        </ul>
-        <ul class="survey-list" v-else>
-          <li :class="{ active: currentSurveyIndex === index }" v-for="(survey, index) in selectedSurveys" :key="index">
-            <a href="#" @click.prevent="openSurvey(index)">{{ index + 1 }}. {{ survey.title }}</a>
-          </li>
-        </ul>
-        <div class="navigation-buttons" v-if="selectingSurveys">
-          <button @click="startSurveys" :disabled="!anySurveySelected">Start Surveys</button>
+  <div class="presurvey-wrapper">
+    <div class="presurvey-container">
+      <h1 @click="selectingSurveys = true" style="text-align: center; cursor: pointer;">
+        Pre-Survey<span v-if="!selectingSurveys">: {{ currentSurvey.title }}</span>
+      </h1>
+      <div class="content">
+        <div class="sidebar" v-if="selectingSurveys">
+          <aside style="color: rgba(180, 180, 180, 1)">Select the surveys you would like to complete.</aside>
+          <ul class="survey-list">
+            <li v-for="(survey, index) in surveys" :key="index">
+              <input type="checkbox" v-model="survey.selected" />
+              {{ survey.title }}
+            </li>
+          </ul>
+          <div class="navigation-buttons">
+            <button @click="startSurveys" :disabled="!anySurveySelected">Start Surveys</button>
+          </div>
         </div>
-        <div class="navigation-buttons" v-else>
-          <button @click="previousQuestion" :disabled="currentQuestionIndex === 0">Previous</button>
-          <button @click="nextStepOrQuestion">{{ nextButtonLabel }}</button>
-        </div>
-      </div>
-      <div class="survey-container" v-if="!selectingSurveys">
-        <div v-if="currentSurvey">
-          <h2>{{ currentSurvey.title }}</h2>
-          <div v-if="currentQuestion">
-            <p v-if="!isInterpersonalTrustQuestion && !isStateTraitAnxietyQuestion">{{ currentQuestion.text }}</p>
-            <div v-if="currentQuestion.text === 'Age (years):'">
-              <input type="text" v-model="responses[currentSurveyIndex][currentQuestionIndex].answer" placeholder="Enter your age" />
-            </div>
-            <div v-else-if="isInterpersonalTrustQuestion">
-              <div class="bubble-container">
-                <p>Use the mouse to click the appropriate response. Please take your time and share your honest opinion.</p>
-                <p>(1 = Strongly Disagree, 7 = Strongly Agree)</p>
-                <p>{{ currentQuestion.text }}</p>
-                <div class="bubbles">
-                  <div 
-                    v-for="n in 7" 
-                    :key="n" 
-                    :class="{ bubble: true, selected: responses[currentSurveyIndex][currentQuestionIndex].answer == n }" 
-                    @click="responses[currentSurveyIndex][currentQuestionIndex].answer = n"
-                  >{{ n }}</div>
+        <div class="survey-container" v-else>
+          <div v-if="currentSurvey">
+            <div v-if="currentQuestion">
+              <p v-if="!isBubbleQuestion">{{ currentQuestion.text }}</p>
+              <div v-if="currentQuestion.text === 'Age (years):'">
+                <input type="text" v-model="responses[currentSurveyIndex][currentQuestionIndex].answer" placeholder="Enter your age" />
+              </div>
+              <div v-else-if="isBubbleQuestion">
+                <div class="bubble-container">
+                  <p style="color: rgba(180, 180, 180, 1)">Select the bubble indicating your response. Please take your time and share your honest opinion.</p>
+                  <p>{{ currentQuestion.text }}</p>
+                  <div class="bubbles">
+                    <div 
+                      v-for="n in bubbleRange" 
+                      :key="n" 
+                      :class="{ bubbleWrapper: true, selected: responses[currentSurveyIndex][currentQuestionIndex].answer == n }" 
+                      @click="responses[currentSurveyIndex][currentQuestionIndex].answer = n"
+                    >
+                      <div class="bubble">{{ n }}</div>
+                      <div class="bubble-label">{{ getBubbleLabel(n) }}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div v-else-if="isStateTraitAnxietyQuestion">
-              <div class="bubble-container">
-                <p>Use the mouse to click the appropriate response. Please take your time and share your honest opinion.</p>
-                <p>(1 = Almost Never, 4 = Almost Always)</p>
-                <p>{{ currentQuestion.text }}</p>
-                <div class="bubbles">
-                  <div 
-                    v-for="n in 4" 
-                    :key="n" 
-                    :class="{ bubble: true, selected: responses[currentSurveyIndex][currentQuestionIndex].answer == n }" 
-                    @click="responses[currentSurveyIndex][currentQuestionIndex].answer = n"
-                  >{{ n }}</div>
+              <div v-else>
+                <div v-for="(option, oIndex) in currentQuestion.options" :key="oIndex">
+                  <label>
+                    <input
+                      type="radio"
+                      :name="'question' + currentQuestionIndex"
+                      :value="option"
+                      v-model="responses[currentSurveyIndex][currentQuestionIndex].answer"
+                      @change="handleOptionChange(currentSurveyIndex, currentQuestionIndex, option)"
+                    />
+                    {{ option }}
+                  </label>
+                  <div v-if="showInputField(currentSurveyIndex, currentQuestionIndex, option)">
+                    <input
+                      v-if="option === 'Other'"
+                      type="text"
+                      v-model="responses[currentSurveyIndex][currentQuestionIndex].other"
+                      placeholder="Please specify"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div v-else>
-              <div v-for="(option, oIndex) in currentQuestion.options" :key="oIndex">
-                <label>
-                  <input
-                    type="radio"
-                    :name="'question' + currentQuestionIndex"
-                    :value="option"
-                    v-model="responses[currentSurveyIndex][currentQuestionIndex].answer"
-                    @change="handleOptionChange(currentSurveyIndex, currentQuestionIndex, option)"
-                  />
-                  {{ option }}
-                </label>
-                <div v-if="showInputField(currentSurveyIndex, currentQuestionIndex, option)">
-                  <input
-                    v-if="option === 'Other'"
-                    type="text"
-                    v-model="responses[currentSurveyIndex][currentQuestionIndex].other"
-                    placeholder="Please specify"
-                  />
-                </div>
+              <div v-if="showAdditionalQuestion(currentSurveyIndex, currentQuestionIndex, 'smoke')">
+                <p>On average, how many times per day do you smoke cigarettes or use another form of tobacco/nicotine?</p>
+                <input type="text" v-model="responses[currentSurveyIndex][currentQuestionIndex].frequency" placeholder="Enter frequency" />
               </div>
-            </div>
-            <div v-if="showAdditionalQuestion(currentSurveyIndex, currentQuestionIndex, 'smoke')">
-              <p>On average, how many times per day do you smoke cigarettes or use another form of tobacco/nicotine?</p>
-              <input type="text" v-model="responses[currentSurveyIndex][currentQuestionIndex].frequency" placeholder="Enter frequency" />
-            </div>
-            <div v-if="showAdditionalQuestion(currentSurveyIndex, currentQuestionIndex, 'caffeine')">
-              <p>On average, how many caffeinated beverages do you consume per day (number of cups)?</p>
-              <input type="text" v-model="responses[currentSurveyIndex][currentQuestionIndex].cups" placeholder="Enter number of cups" />
+              <div v-if="showAdditionalQuestion(currentSurveyIndex, currentQuestionIndex, 'caffeine')">
+                <p>On average, how many caffeinated beverages do you consume per day (number of cups)?</p>
+                <input type="text" v-model="responses[currentSurveyIndex][currentQuestionIndex].cups" placeholder="Enter number of cups" />
+              </div>
             </div>
           </div>
         </div>
+      </div>
+      <div class="navigation-buttons" v-if="!selectingSurveys">
+        <button @click="previousQuestion">Previous</button>
+        <button @click="nextStepOrQuestion">{{ nextButtonLabel }}</button>
       </div>
     </div>
   </div>
@@ -156,7 +140,13 @@ export default {
         {
           title: 'Shooting Game Experience Questionnaire',
           questions: [
-            { text: 'How often do you play shooting games?', options: ['Daily', 'Weekly', 'Monthly', 'Rarely', 'Never'] }
+            { text: '1. How long have you played games?', options: ['Never played', '6 months', '1 year', '2-5 years', '5-10 years', '10 or more years'] },
+            { text: '2. On average, how often do you currently play video games?', options: ['Never', 'Less than once a month', '1-3 times a month', 'Once or twice a week', 'Almost every day'] },
+            { text: '3. During the average week, how many hours do you currently spend playing video games?', options: ['Less than 2 hours', '2-5 hours', '8-10 hours', '10-15 hours', 'More than 20 hours'] },
+            { text: '4. On a typical day, when you play video games how many hours do you usually spend playing?', options: ['Less than 2 hours', '2-5 hours', '8-10 hours', '10-15 hours', 'More than 20 hours'] },
+            { text: '5. How skilled do you feel you are at playing video games?', options: ['No skill', 'Not very skilled', 'Moderately skilled', 'Very skilled'] },
+            { text: '6. Please rate your experience playing video games on a scale of 1 (very inexperienced) to 7 (very experienced).', options: [] },
+            { text: '7. Please rate each of the following game genres based on your preference, on a scale from 1 (Least Preferred) to 5 (Most Preferred).', options: [] },
           ],
           selected: false
         },
@@ -212,11 +202,14 @@ export default {
     isLastSurvey() {
       return this.currentSurveyIndex === this.selectedSurveys.length - 1;
     },
-    isInterpersonalTrustQuestion() {
-      return this.currentSurvey.title === 'Interpersonal Trust Scale Questionnaire';
+    isBubbleQuestion() {
+      return this.currentSurvey.title === 'Interpersonal Trust Scale Questionnaire' || this.currentSurvey.title === 'The State-Trait Anxiety Inventory' || this.currentSurvey.title === 'Shooting Game Experience Questionnaire';
     },
-    isStateTraitAnxietyQuestion() {
-      return this.currentSurvey.title === 'The State-Trait Anxiety Inventory';
+    bubbleRange() {
+      if (this.currentSurvey.title === 'Interpersonal Trust Scale Questionnaire') return 7;
+      if (this.currentSurvey.title === 'Shooting Game Experience Questionnaire') return 5;
+      if (this.currentSurvey.title === 'The State-Trait Anxiety Inventory') return 4;
+      return 7;
     },
     nextButtonLabel() {
       if (this.isLastSurvey && this.isLastQuestion) {
@@ -238,6 +231,8 @@ export default {
     previousQuestion() {
       if (this.currentQuestionIndex > 0) {
         this.currentQuestionIndex -= 1;
+      } else if (this.currentQuestionIndex === 0 && this.currentSurveyIndex === 0) {
+        this.selectingSurveys = true;
       }
     },
     nextStepOrQuestion() {
@@ -291,7 +286,42 @@ export default {
         return question.text.includes('how frequently do you consume caffeinated beverages') && this.responses[surveyIndex][questionIndex].answer === 'Every day';
       }
       return false;
-    }
+    },
+    getBubbleLabel(n) {
+      const interpersonalTrustLabels = {
+        1: 'Strongly Disagree',
+        2: 'Disagree',
+        3: 'Somewhat Disagree',
+        4: 'Neutral',
+        5: 'Somewhat Agree',
+        6: 'Agree',
+        7: 'Strongly Agree',
+      };
+      const shootingGameLabels = {
+        1: 'Strongly do not prefer',
+        2: 'Do not prefer',
+        3: 'Indifferent',
+        4: 'Prefer',
+        5: 'Strongly Prefer',
+      };
+      const stateTraitAnxietyLabels = {
+        1: 'Almost Never',
+        2: 'Sometimes',
+        3: 'Often',
+        4: 'Almost Always',
+      };
+
+      if (this.currentSurvey.title === 'Interpersonal Trust Scale Questionnaire') {
+        return interpersonalTrustLabels[n] || '';
+      }
+      if (this.currentSurvey.title === 'Shooting Game Experience Questionnaire') {
+        return shootingGameLabels[n] || '';
+      }
+      if (this.currentSurvey.title === 'The State-Trait Anxiety Inventory') {
+        return stateTraitAnxietyLabels[n] || '';
+      }
+      return '';
+    },
   },
   mounted() {
     this.openSurvey(0);
@@ -300,6 +330,18 @@ export default {
 </script>
 
 <style scoped>
+.presurvey-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.presurvey-container {
+  margin-bottom: 10%;
+}
+
 .presurvey-container {
   padding: 1em;
 }
@@ -310,23 +352,30 @@ export default {
 }
 
 .sidebar {
-  width: 300px;
-  background-color: #454545;
-  color: white;
-  padding: 1em;
-  border-radius: 5px;
+  text-align: center;
+  width: 22vw;
+  color: rgba(215,215,215,1);
+  padding: 16px;
+  border-radius: 8px;
   order: 1;
 }
 
 .survey-container {
+  width: 5vw;
   flex-grow: 1;
-  margin-left: 20px;
   order: 2;
+  background-color: rgba(0,0,0,0.2);
+  backdrop-filter: blur(50px);
+  color: rgba(215,215,215,1);
+  padding: 0px 32px 32px 32px;
+  border-radius: 8px;
 }
 
 .survey-list {
   list-style-type: none;
   padding: 0;
+  margin-left: 15%;
+  text-align: left;
 }
 
 .survey-list li {
@@ -347,6 +396,7 @@ export default {
 
 .navigation-buttons {
   margin-top: 20px;
+  text-align: center;
 }
 
 .navigation-buttons button {
@@ -355,8 +405,9 @@ export default {
   border: 1px solid #ccc;
   border-radius: 5px;
   cursor: pointer;
-  width: 100%;
+  width: 120px;
   text-align: center;
+  font-family: "Monda", sans-serif;
 }
 
 .bubble-container {
@@ -365,8 +416,21 @@ export default {
 
 .bubbles {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   margin: 1em 0;
+  color: gray;
+}
+
+.bubbleWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 15%;
+}
+
+.bubbleWrapper.selected .bubble {
+  background-color: #42b983;
+  color: white;
 }
 
 .bubble {
@@ -381,13 +445,22 @@ export default {
   transition: background-color 0.3s;
 }
 
-.bubble.selected {
-  background-color: #42b983;
-  color: white;
+.bubble-label {
+  margin-top: 0.5em;
+  text-align: center;
+  font-size: 10px;
+  color: rgba(215,215,215,1);
+  width:120px;
 }
 
-.bubble-labels {
-  display: flex;
-  justify-content: space-between;
+input {
+  font-family: "Monda", sans-serif;
+  background-color: rgba(0,0,0,0.1);
+  color: rgba(215,215,215,1);
+  outline: none;
+  border: none;
+  height: 28px;
+  padding: 8px;
+  border-radius: 8px;
 }
 </style>

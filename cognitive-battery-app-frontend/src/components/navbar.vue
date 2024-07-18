@@ -1,10 +1,11 @@
 <template>
-    <div id="navbar" v-if="subjectId">
+  <div id="navbar" v-if="subjectId">
+    <button @click="toggleSidebar" id="toggle-sidebar-button">
+        <i class="fas fa-bars"></i>
+      </button>
+    <span>Subject ID: <strong>{{ subjectId }}</strong></span>
+    <div class="button-group">
       
-      <span>Subject ID: <strong>{{ subjectId }}</strong></span>
-
-      <Status></Status>
-
       <button @click="goToHome" id="home-button">
         <i class="fas fa-house"></i>
       </button>
@@ -12,77 +13,59 @@
         <i class="fas fa-sign-out-alt"></i>
       </button>
     </div>
-  </template>
-  
-  <script>
-  import { mapState, mapActions } from 'vuex';
-  import Status from './status.vue'
-  import '@fortawesome/fontawesome-free/css/all.css';
-  
-  export default {
-    components: {
-      Status
+  </div>
+</template>
+
+<script>
+import { mapState, mapActions } from 'vuex';
+import '@fortawesome/fontawesome-free/css/all.css';
+
+export default {
+  computed: {
+    ...mapState(['subjectId'])
+  },
+  methods: {
+    ...mapActions(['logout', 'goToHome', 'toggleSidebar']),
+    performLogout() {
+      this.logout();
     },
-    computed: {
-      ...mapState(['subjectId', 'steps', 'currentStepIndex']),
-      isFirstStep() {
-        return this.currentStepIndex === 0;
-      },
-      isLastStep() {
-        return false; //return this.currentStepIndex === this.steps.length - 1;
-      }
+    goToHome() {
+      this.$router.push('/');
     },
-    methods: {
-      ...mapActions(['logout', 'nextStep', 'previousStep', 'goToHome']),
-      performLogout() {
-        this.logout();
-      },
-      goToHome() {
-        this.$router.push('/');
-      }
+    toggleSidebar() {
+      this.$store.commit('toggleSidebar')
+      console.log(this.$store.state.isSidebarCollapsed)
     }
-  };
-  </script>
-  
-  <style>
-  #navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1em;
-    background-color: #f8f8f8;
-    border-bottom: 1px solid #ddd;
-    font-size: 10px;
   }
-  
-  #logout-button, #home-button {
-    padding: 0.5em 1em;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin: 0 0.5em;
-  }
+};
+</script>
 
-  #home-button {
-    background-color: #42b983;
-  }
-  
-  #logout-button {
-    background-color: #f44336;
-  }
+<style scoped>
+span {
+  flex: 1;
+  margin-left: 16px;
+}
 
-  #home-button:hover {
-    background-color: #358a6e;
-  }
-  
-  #logout-button:hover {
-    background-color: #d32f2f;
-  }
-  
-  span {
-    margin-right: auto;
-    padding-right: 20px;
-  }
-  </style>
-  
+.button-group {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  margin-right: 16px;
+}
+
+#toggle-sidebar-button, #logout-button, #home-button {
+  padding: 0.5em 1em;
+  color: rgba(200,200,200,1);
+  background-color: rgba(255,255,255,0);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: background-color 0.3s ease;
+}
+
+#toggle-sidebar-button:hover, #logout-button:hover, #home-button:hover {
+  background-color: rgba(255,255,255,0.3);
+}
+</style>
