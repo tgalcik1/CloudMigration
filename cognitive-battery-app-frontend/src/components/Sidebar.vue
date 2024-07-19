@@ -8,7 +8,7 @@
           :class="{ active: isActiveRoute(route) }"
           @click="navigateTo(route.path)"
         >
-        <i style="margin-left: 32px; margin-right: 16px" class="fas fa-user"></i>
+        <i style="margin-left: 20px; margin-right: 32px" :class="route.meta.icon"></i>
           {{ capitalize(route.name || route.path) }}
         </li>
       </ul>
@@ -54,9 +54,9 @@ export default {
 <style scoped>
 .sidebar-container {
   height: calc(100vh - 120px);
-  top: 60px;
+  top: 59px;
   width: 200px;
-  background-color: rgba(255,255,255,0.1);
+  background-color: rgba(0,0,0,0.4);
   backdrop-filter: blur(50px);
   position: absolute;
   transition: width 0.3s ease;
@@ -74,7 +74,7 @@ margin-top: 0px;
   padding: 0;
   margin-left: 0;
   transition: margin-left 0.3s ease;
-  background-color: rgba(0,0,0,0.2);
+  background-color: rgba(255,255,255,0.1);
 }
 
 ul.collapsed {
@@ -89,7 +89,7 @@ li {
   justify-content: left;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
-  color: #42b983;
+  color: #b2b2b2;
 }
 
 li:hover {

@@ -213,7 +213,7 @@ export default {
     },
     nextButtonLabel() {
       if (this.isLastSurvey && this.isLastQuestion) {
-        return 'Continue to Setup';
+        return 'Continue';
       }
       return this.isLastQuestion ? 'Next Survey' : 'Next';
     }
@@ -353,7 +353,7 @@ export default {
 
 .sidebar {
   text-align: center;
-  width: 22vw;
+  width: 30vw;
   color: rgba(215,215,215,1);
   padding: 16px;
   border-radius: 8px;
@@ -371,11 +371,24 @@ export default {
   border-radius: 8px;
 }
 
+  button:hover:not(.connect-button) {
+    background-color: #a3a3a3;
+  }
+
+  button:disabled{
+    background-color: rgba(255,255,255,0.3);
+  }
+
+  button:disabled:hover{
+    cursor: not-allowed;
+    background-color: rgba(255,255,255,0.3);
+  }
+
 .survey-list {
   list-style-type: none;
   padding: 0;
-  margin-left: 15%;
   text-align: left;
+  margin-left: 70px;
 }
 
 .survey-list li {
@@ -388,6 +401,7 @@ export default {
   text-decoration: none;
   color: #42b983;
   margin-left: 0.5em;
+  margin-right: 0.5em;
 }
 
 .survey-list li.active a {
@@ -408,6 +422,7 @@ export default {
   width: 120px;
   text-align: center;
   font-family: "Monda", sans-serif;
+  transition: background-color 0.3s ease;
 }
 
 .bubble-container {

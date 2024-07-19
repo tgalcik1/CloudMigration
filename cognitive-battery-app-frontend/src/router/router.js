@@ -13,7 +13,7 @@ const routes = [
     path: '/',
     name: 'Welcome',
     component: Home,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, icon: 'fas fa-house' }
   },
   {
     path: '/signin',
@@ -25,19 +25,19 @@ const routes = [
     path: '/presurvey',
     name: 'Pre-Survey',
     component: Presurvey,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, icon: 'fas fa-square-poll-horizontal' }
   },
   {
     path: '/setup',
     name: 'Setup',
     component: Setup,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, icon: 'fas fa-sliders' }
   },
   {
     path: '/baseline',
     name: 'Baseline',
     component: Baseline,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, icon: 'fas fa-chart-line' }
   },
   {
     path: '/video',
@@ -55,7 +55,7 @@ const routes = [
     path: '/game',
     name: 'Game',
     component: GameView,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, icon: 'fas fa-gamepad' }
   }
 ];
 

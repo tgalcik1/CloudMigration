@@ -36,6 +36,7 @@ export default {
         this.signinContainerClass = 'signin-container-hidden';
         setTimeout(() => {
           this.login(this.subjectId).then(() => {
+            window.api.send('toMain', { command: 'setup-iot' });
             this.$router.push('/');
           });
         }, 1000); // delay to allow fade-out effect

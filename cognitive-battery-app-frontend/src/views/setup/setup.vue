@@ -42,7 +42,8 @@
 
           <div class="navigation-buttons">
             <button @click="previousStep" :disabled="currentStepIndex === 0">Previous</button>
-            <button @click="nextStepOrComplete">{{ currentStepIndex === steps.length - 1 ? 'Complete Setup' : 'Next' }}</button>
+            <button class="connect-button" v-if="currentStepIndex === steps.length - 1" @click="nextStepOrComplete">Complete</button>
+            <button v-else @click="nextStepOrComplete">Next</button>
           </div>
 
         </div>
@@ -198,7 +199,7 @@
     transition: background-color 0.2s ease;
   }
 
-  .navigation-buttons button:hover {
+  .navigation-buttons button:hover:not(.connect-button) {
     background-color: #a3a3a3;
   }
 
@@ -213,14 +214,14 @@
   
   .step-content {
     flex-grow: 1;
-    margin-left: 20px;
-    width: 80vw;
+    width: 60vw;
   }
   
   .device-instructions {
     display: flex;
     justify-content: space-around;
     gap: 20px;
+    font-size: 14px;
   }
   
   .device {
@@ -230,11 +231,12 @@
     border-radius: 16px;
     text-align: center;
     background: white;
-    transition: border 0.3s ease;
+    transition: opacity 0.3s ease, border 0.3s ease;
   }
 
-  .device:hover{
+  .grayed-out:hover{
     cursor: pointer;
+    opacity: 0.5;
   }
   
   .device button {
@@ -254,7 +256,6 @@
   .grayed-out {
     border: 6px solid white;
     opacity: 0.35;
-    filter: grayscale(100%);
   }
   
   .step-image {

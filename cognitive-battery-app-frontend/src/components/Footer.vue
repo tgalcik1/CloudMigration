@@ -6,7 +6,7 @@
   
   <script>
   import { mapState } from 'vuex';
-  import Status from './status.vue'
+  import Status from './DeviceStatus.vue'
   import '@fortawesome/fontawesome-free/css/all.css';
   
   export default {

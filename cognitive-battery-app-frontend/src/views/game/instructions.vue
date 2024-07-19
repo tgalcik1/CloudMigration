@@ -23,26 +23,28 @@
   }
 
   .instructions-container {
+    margin-top: 5%;
     text-align: center;
     margin-bottom: 10%;
   }
 
   .instructions {
-    width: 25vw;
+    width: 35vw;
     text-align: left;
   }
   
   .game-button {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #42b983;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
   }
-  
+
   .game-button:hover {
-    background-color: #0056b3;
+    background-color: #339267;
   }
   </style>
   

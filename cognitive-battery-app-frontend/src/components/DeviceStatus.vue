@@ -11,17 +11,23 @@
 export default {
   data() {
     return {
-      statusMessageEye: 'Eye Tracker Disconnected',
-      statusMessageECG: 'ECG Disconnected'
+      statusMessageEye: 'Eye Tracker disconnected',
+      statusMessageECG: 'ECG disconnected'
     };
   },
   mounted() {
     if (window.api && window.api.receive) {
       window.api.receive('fromMain', (data) => {
-        if (data.status) {
-          this.statusMessage = data.status;
-        } else if (data.error) {
-          this.statusMessage = `Error: ${data.error}`;
+        if (data.eyeStatus) {
+          this.statusMessageEye = data.eyeStatus;
+        } else if (data.eyeError) {
+          this.statusMessageEye = `Error: ${data.eyeError}`;
+        }
+        else if (data.sensorStatus) {
+          this.statusMessageECG = data.sensorStatus;
+        }
+        else if (data.sensorError) {
+          this.statusMessageECG = `Error: ${data.sensorError}`;
         }
       });
     }

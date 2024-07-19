@@ -1,12 +1,16 @@
 const { ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
+require('dotenv').config();
 const { spawn, exec } = require('child_process');
 import { app, protocol, BrowserWindow, screen } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
 const isDevelopment = process.env.NODE_ENV !== 'production';
-const net = require('net');
+const awsIot = require('aws-iot-device-sdk');
+const fs = require('fs');
+
+let device = null;
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -93,7 +97,16 @@ ipcMain.on('toMain', (event, args) => {
 
     case 'update-task':
       console.log('updating task...');
-      updateTask(args.task);
+      break;
+
+    case 'setup-iot':
+      console.log('setting up IoT...')
+      setupIot(event);
+      break;
+
+    case 'disconnect-iot':
+      console.log('disconnecting IoT...')
+      disconnectIot(event);
       break;
 
     default:
@@ -125,7 +138,7 @@ function startDataCollection(subjectId, device, task, event) {
       break;
     default:
       console.error('[IPC MAIN] invalid device type');
-      event.reply('fromMain', { error: 'invalid device type' });
+      event.reply('fromMain', { sensorError: 'Invalid device type' });
       return;
   }
 
@@ -139,17 +152,17 @@ function startDataCollection(subjectId, device, task, event) {
 
   eyeProcess.stdout.on('data', (data) => {
     console.log(`[IPC MAIN] record_eye stdout: ${data}`);
-    event.reply('fromMain', { status: `Record_eye output: ${data.toString()}` });
+    event.reply('fromMain', { eyeStatus: `Record_eye output: ${data.toString()}` });
   });
 
   eyeProcess.stderr.on('data', (data) => {
     console.error(`[IPC MAIN] record_eye stderr: ${data}`);
-    event.reply('fromMain', { error: `Record_eye error: ${data.toString()}` });
+    event.reply('fromMain', { eyeError: `Record_eye error: ${data.toString()}` });
   });
 
   eyeProcess.on('close', (code) => {
     console.log(`record_eye process exited with code ${code}`);
-    event.reply('fromMain', { status: `Record_eye exited with code ${code}` });
+    event.reply('fromMain', { eyeStatus: `Record_eye exited with code ${code}` });
   });
 
   const recordSensorPath = path.join(scriptPath, filename);
@@ -157,23 +170,23 @@ function startDataCollection(subjectId, device, task, event) {
 
   sensorProcess.stdout.on('data', (data) => {
     console.log(`record_sensor stdout: ${data}`);
-    event.reply('fromMain', { status: `Record_sensor output: ${data.toString()}` });
+    event.reply('fromMain', { sensorStatus: `Record_sensor output: ${data.toString()}` });
   });
 
   sensorProcess.stderr.on('data', (data) => {
     console.error(`record_sensor stderr: ${data}`);
-    event.reply('fromMain', { error: `Record_sensor error: ${data.toString()}` });
+    event.reply('fromMain', { sensorError: `Record_sensor error: ${data.toString()}` });
   });
 
   sensorProcess.on('close', (code) => {
     console.log(`record_sensor process exited with code ${code}`);
-    event.reply('fromMain', { status: `Record_sensor exited with code ${code}` });
+    event.reply('fromMain', { sensorStatus: `Record_sensor exited with code ${code}` });
   });
 
   ipcMain.once('stop-data-collection', () => {
     eyeProcess.kill();
     sensorProcess.kill();
-    event.reply('fromMain', { status: 'Data collection stopped' });
+    event.reply('fromMain', { sensorStatus: 'Stopped', eyeStatus: 'Stopped' });
   });
 }
 
@@ -184,18 +197,67 @@ function stopDataCollection(event) {
   event.reply('fromMain', { status: 'data collection stopped' });
 }
 
-function updateTask(newTask) {
-  const client = new net.Socket();
-  client.connect(50501, 'localhost', () => {
-    console.log('connected to control server');
-    client.write(newTask);
+function setupIot(event) {
+  device = awsIot.device({
+    keyPath: process.env.AWS_IOT_KEY_PATH,
+    certPath: process.env.AWS_IOT_CERT_PATH,
+    caPath: process.env.AWS_IOT_CA_PATH,
+    clientId: process.env.AWS_IOT_CLIENT_ID,
+    host: process.env.AWS_IOT_HOST,
+    keepalive: 60,
+    debug: true
   });
 
-  client.on('data', (data) => {
-    console.log(`received: ${data}`);
+  device.on('connect', function() {
+    console.log('Connected to AWS IoT');
+    event.reply('fromMain', { iotStatus: 'IoT connected' });
+
+    // // debug subscription
+    // device.subscribe('sdk/test/js', function(err, granted) {
+    //   if (err) {
+    //     console.error('Subscription error:', err);
+    //   } else {
+    //     console.log('Subscribed to topic:', granted);
+    //   }
+    // });
+
+    // // debug publish
+    // device.publish('sdk/test/js', JSON.stringify({ key: 'value' }));
   });
 
-  client.on('close', () => {
-    console.log('connection closed');
+  device.on('message', function(topic, payload) {
+    console.log('message received:', topic, payload.toString());
+    // event.reply('fromMain', { iotStatus: `Message received on topic ${topic}`, payload: payload.toString() });
   });
+
+  device.on('error', function(error) {
+    console.error('Error:', error);
+  });
+
+  device.on('close', function() {
+    console.log('Connection closed');
+    event.reply('fromMain', { iotStatus: 'IoT connection closed' });
+  });
+
+  device.on('reconnect', function() {
+    console.log('Reconnecting');
+    event.reply('fromMain', { iotStatus: 'IoT reconnecting...' });
+  });
+
+  device.on('offline', function() {
+    console.log('Offline');
+    event.reply('fromMain', { iotStatus: 'IoT disconnected' });
+  });
+}
+
+function disconnectIot(event) {
+  if (device) {
+    device.end(true, () => {
+      console.log('Disconnected from AWS IoT');
+      event.reply('fromMain', { iotStatus: 'IoT disconnected' });
+      device = null;
+    });
+  } else {
+    console.log('IoT device is null');
+  }
 }

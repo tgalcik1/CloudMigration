@@ -5,7 +5,7 @@
       </button>
     <span>Subject ID: <strong>{{ subjectId }}</strong></span>
     <div class="button-group">
-      
+      <IotStatus></IotStatus>
       <button @click="goToHome" id="home-button">
         <i class="fas fa-house"></i>
       </button>
@@ -18,9 +18,13 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
+import IotStatus from './IotStatus.vue';
 import '@fortawesome/fontawesome-free/css/all.css';
 
 export default {
+  components: {
+    IotStatus
+  },
   computed: {
     ...mapState(['subjectId'])
   },
@@ -34,7 +38,6 @@ export default {
     },
     toggleSidebar() {
       this.$store.commit('toggleSidebar')
-      console.log(this.$store.state.isSidebarCollapsed)
     }
   }
 };

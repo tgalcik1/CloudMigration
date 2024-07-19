@@ -2,7 +2,8 @@
   <div class="baseline-wrapper">
     <div class="baseline-container">
       <h1>Baseline</h1>
-      <p>We will now record five minutes of resting activity. During this time, please sit comfortably and remain still. Ensure you sit up straight and avoid crossing your legs.</p>
+      <p>We will now record five minutes of resting activity. </p>
+      <p>During this time, please sit comfortably and remain still. Ensure you sit up straight and avoid crossing your legs.</p>
       <router-link to="/video" class="baseline-button">Begin</router-link>
     </div>
   </div>

@@ -5,7 +5,8 @@ export default createStore({
   state: {
     subjectId: localStorage.getItem('user') || null,
     selectedEcgDevice: localStorage.getItem('ecgDevice') || 'ecg1',
-    isSidebarCollapsed: true
+    isSidebarCollapsed: true,
+    iotStatus: 'IoT disconnected'
   },
   mutations: {
     setSubjectId(state, subjectId) {
@@ -31,6 +32,9 @@ export default createStore({
     },
     collapseSidebar(state) {
       state.isSidebarCollapsed = true;
+    },
+    setIotStatus(state, status) {
+      state.iotStatus = status;
     }
   },
   actions: {
@@ -40,6 +44,7 @@ export default createStore({
     logout({ commit }) {
       commit('setSubjectId', null);
       commit('collapseSidebar');
+      window.api.send('toMain', { command: 'disconnect-iot' });
       router.push('/signin');
     },
     selectEcgDevice({ commit }, device) {
@@ -47,6 +52,21 @@ export default createStore({
     },
     toggleSidebar({ commit }) {
       commit('toggleSidebar');
+    },
+    updateIotStatus({ commit }, status) {
+      commit('setIotStatus', status);
     }
   }
 });
+
+// update iot status
+if (window.api && window.api.receive) {
+  window.api.receive('fromMain', (data) => {
+    const store = require('./store').default;
+    if (data.iotStatus) {
+      store.dispatch('updateIotStatus', data.iotStatus);
+    } else if (data.error) {
+      store.dispatch('updateIotStatus', `Error: ${data.error}`);
+    }
+  });
+}
