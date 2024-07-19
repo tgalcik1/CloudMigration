@@ -354,6 +354,7 @@ export default {
 .sidebar {
   text-align: center;
   width: 30vw;
+  max-width: 500px;
   color: rgba(215,215,215,1);
   padding: 16px;
   border-radius: 8px;

@@ -7,6 +7,7 @@ import Baseline from '@/views/baseline/baseline.vue';
 import Video from '@/views/baseline/video.vue';
 import Instructions from '@/views/game/instructions.vue';
 import GameView from '@/views/game/game.vue';
+import store from '@/store/store.js';
 
 const routes = [
   {
@@ -35,13 +36,13 @@ const routes = [
   },
   {
     path: '/baseline',
-    name: 'Baseline',
+    name: 'Baseline Instructions',
     component: Baseline,
     meta: { requiresAuth: true, icon: 'fas fa-chart-line' }
   },
   {
     path: '/video',
-    name: 'Video',
+    name: 'Baseline',
     component: Video,
     meta: { requiresAuth: true, hidden: true }
   },
@@ -69,6 +70,11 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) {
     next('/signin');
   } else {
+    const subjectId = store.state.subjectId;
+    if (from.name)
+      window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: {subjectId: subjectId, taskState: 'end-task', taskName: from.name}});
+    if (to.name)
+      window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: {subjectId: subjectId, taskState: 'start-task', taskName: to.name}});
     next();
   }
 });

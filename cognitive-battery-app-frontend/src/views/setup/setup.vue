@@ -1,6 +1,6 @@
 <template>
   <div class="setup-wrapper">
-    <div class="setup-container">
+    <div :class="['setup-container', { 'setup-centered': currentStepIndex === 0 }]">
       <h1>Setup</h1>
       <div class="content">
         <div class="step-content" v-if="currentStep">
@@ -8,7 +8,6 @@
           <div style="margin-top: -32px; margin-bottom: 32px" v-if="currentStepIndex === 0"><p style="color: rgb(180, 180, 180)">Select the device being used for this study.</p></div>
           <div v-if="currentStepIndex === 0" class="device-instructions">
             
-
             <div @click="selectEcgDevice('arduino')" :class="['device', { 'grayed-out': selectedEcgDevice !== 'arduino' }]">
               <button  :class="{ active: selectedEcgDevice === 'arduino' }">3-Lead ECG</button>
               <img src="images/ecg-diagram.png" alt="3-Lead ECG Device Setup" class="step-image">
@@ -149,6 +148,11 @@
     padding: 1em;
     display: flex;
     flex-direction: column;
+    margin-bottom: 10%;
+  }
+
+  .setup-centered {
+    margin-bottom: 0%;
   }
   
   .content {

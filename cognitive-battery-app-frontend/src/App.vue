@@ -55,7 +55,6 @@ export default {
   },
   methods: {
     toggleNavbarFooter(show) {
-      console.log('Toggling navbar and footer visibility to:', show);
       this.showNavbarFooter = show;
     }
   },
@@ -103,7 +102,7 @@ export default {
 .fade-enter-active, .fade-leave-active {
   transition: opacity 2s;
 }
-.fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 </style>

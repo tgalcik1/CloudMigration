@@ -27,11 +27,7 @@ export default {
   mounted() {
     this.startTimer();
     this.$store.commit('collapseSidebar');
-
-    // Fade out navbar and footer
     this.$emit('toggle-navbar-footer', false);
-
-    // Delay the background color change to allow the initial style to apply
     setTimeout(() => {
       this.$refs.videoWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0)';
     }, 10);
@@ -45,7 +41,6 @@ export default {
           this.remainingTime--;
           if (this.remainingTime === 2) {
             this.fadeBack();
-            // Fade in navbar and footer
             this.$emit('toggle-navbar-footer', true);
             this.startSmoothReset();
           }
@@ -93,7 +88,6 @@ export default {
     }
   },
   beforeUnmount() {
-    window.api.send('toMain', { command: 'stop-data-collection' });
     clearInterval(this.interval);
     clearInterval(this.hueInterval);
     clearInterval(this.resetInterval);
@@ -106,7 +100,7 @@ export default {
   cursor: none;
   background-color: rgba(0, 0, 0, 0.5);
   height: 100%;
-  transition: background-color 2s ease-in-out; /* Adjust the duration as needed */
+  transition: background-color 2s ease-in-out;
 }
 
 .baseline-container {

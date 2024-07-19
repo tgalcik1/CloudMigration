@@ -21,6 +21,7 @@ async function createWindow() {
   const { width, height } = primaryDisplay.workAreaSize;
 
   const win = new BrowserWindow({
+    autoHideMenuBar: true,
     width: width,
     height: height,
     webPreferences: {
@@ -100,13 +101,18 @@ ipcMain.on('toMain', (event, args) => {
       break;
 
     case 'setup-iot':
-      console.log('setting up IoT...')
+      console.log('setting up IoT...');
       setupIot(event);
       break;
 
     case 'disconnect-iot':
-      console.log('disconnecting IoT...')
+      console.log('disconnecting IoT...');
       disconnectIot(event);
+      break;
+
+    case 'send-iot-message':
+      console.log('sending IoT message...');
+      sendIotMessage(args.topic, args.message, event);
       break;
 
     default:
@@ -204,30 +210,16 @@ function setupIot(event) {
     caPath: process.env.AWS_IOT_CA_PATH,
     clientId: process.env.AWS_IOT_CLIENT_ID,
     host: process.env.AWS_IOT_HOST,
-    keepalive: 60,
     debug: true
   });
 
   device.on('connect', function() {
     console.log('Connected to AWS IoT');
     event.reply('fromMain', { iotStatus: 'IoT connected' });
-
-    // // debug subscription
-    // device.subscribe('sdk/test/js', function(err, granted) {
-    //   if (err) {
-    //     console.error('Subscription error:', err);
-    //   } else {
-    //     console.log('Subscribed to topic:', granted);
-    //   }
-    // });
-
-    // // debug publish
-    // device.publish('sdk/test/js', JSON.stringify({ key: 'value' }));
   });
 
   device.on('message', function(topic, payload) {
     console.log('message received:', topic, payload.toString());
-    // event.reply('fromMain', { iotStatus: `Message received on topic ${topic}`, payload: payload.toString() });
   });
 
   device.on('error', function(error) {
@@ -258,6 +250,23 @@ function disconnectIot(event) {
       device = null;
     });
   } else {
-    console.log('IoT device is null');
+    console.log('Already disconnected from IoT');
+  }
+}
+
+function sendIotMessage(topic, message, event) {
+  if (device) {
+    device.publish(topic, JSON.stringify(message), (err) => {
+      if (err) {
+        console.error('Publish error:', err);
+        // event.reply('fromMain', { iotStatus: 'Failed to send IoT message', error: err });
+      } else {
+        console.log('Message sent to topic:', topic);
+        // event.reply('fromMain', { iotStatus: 'IoT message sent', topic: topic, message: message });
+      }
+    });
+  } else {
+    console.error('IoT device is not connected');
+    event.reply('fromMain', { iotStatus: 'IoT disconnected' });
   }
 }

@@ -9,7 +9,7 @@
           @click="navigateTo(route.path)"
         >
         <i style="margin-left: 20px; margin-right: 32px" :class="route.meta.icon"></i>
-          {{ capitalize(route.name || route.path) }}
+          {{ capitalize((route.name === "Baseline Instructions" ? "Baseline" : route.name) || route.path) }}
         </li>
       </ul>
     </div>

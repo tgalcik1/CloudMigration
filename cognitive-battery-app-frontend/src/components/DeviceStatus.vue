@@ -1,5 +1,5 @@
 <template>
-  <div class="status-container" v-if="isRouteInList(['Setup', 'Baseline', 'Video', 'Instructions', 'Game'])">
+  <div class="status-container" v-if="isRouteInList(['Setup', 'Baseline Instructions', 'Baseline', 'Instructions', 'Game'])">
     <i class="fa-solid fa-heart-circle-xmark"></i>
     <p class="status-text">{{ statusMessageECG }}</p>
     <i class="fa-solid fa-eye-low-vision"></i>
@@ -11,7 +11,7 @@
 export default {
   data() {
     return {
-      statusMessageEye: 'Eye Tracker disconnected',
+      statusMessageEye: 'Eye tracker disconnected',
       statusMessageECG: 'ECG disconnected'
     };
   },
