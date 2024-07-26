@@ -4,9 +4,12 @@ import router from '../router/router';
 export default createStore({
   state: {
     subjectId: localStorage.getItem('user') || null,
-    selectedEcgDevice: localStorage.getItem('ecgDevice') || 'ecg1',
+    currentTask: localStorage.getItem('task') || null,
+    selectedEcgDevice: localStorage.getItem('ecgDevice') || null,
     isSidebarCollapsed: true,
-    iotStatus: 'IoT disconnected'
+    iotStatus: 'IoT disconnected',
+    eyeStatus: 'Eye tracker disconnected',
+    sensorStatus: 'ECG disconnected'
   },
   mutations: {
     setSubjectId(state, subjectId) {
@@ -16,6 +19,15 @@ export default createStore({
         window.api.send('toMain', { command: 'sign-in', subjectId: subjectId });
       } else {
         localStorage.removeItem('user');
+      }
+    },
+    setCurrentTask(state, currentTask) {
+      state.currentTask = currentTask;
+      if (currentTask) {
+        localStorage.setItem('task', currentTask);
+        window.api.send('toMain', { command: 'update-task', task: currentTask });
+      } else {
+        localStorage.removeItem('task');
       }
     },
     setSelectedEcgDevice(state, device) {
@@ -35,16 +47,26 @@ export default createStore({
     },
     setIotStatus(state, status) {
       state.iotStatus = status;
+    },
+    setEyeStatus(state, status) {
+      state.eyeStatus = status;
+    },
+    setSensorStatus(state, status) {
+      state.sensorStatus = status;
     }
   },
   actions: {
     login({ commit }, subjectId) {
       commit('setSubjectId', subjectId);
+      commit('setSelectedEcgDevice', null);
     },
     logout({ commit }) {
       commit('setSubjectId', null);
+      commit('setCurrentTask', null);
+      commit('setSelectedEcgDevice', null);
       commit('collapseSidebar');
       window.api.send('toMain', { command: 'disconnect-iot' });
+      window.api.send('toMain', { command: 'stop-data-collection' });
       router.push('/signin');
     },
     selectEcgDevice({ commit }, device) {

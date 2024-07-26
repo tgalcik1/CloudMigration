@@ -3,6 +3,7 @@ const path = require('path');
 const os = require('os');
 require('dotenv').config();
 const { spawn, exec } = require('child_process');
+const net = require('net');
 import { app, protocol, BrowserWindow, screen } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
@@ -11,6 +12,49 @@ const awsIot = require('aws-iot-device-sdk');
 const fs = require('fs');
 
 let device = null;
+let subjectId = null;
+let currentTask = null;
+let currentEcgDevice = null;
+let scriptPath;
+
+if (isDevelopment) {
+  scriptPath = path.join(__dirname, '..', 'public', 'scripts');
+} else {
+  scriptPath = path.join(process.resourcesPath, 'scripts');
+}
+
+const EYE_PIPE_NAME_PATH = '\\\\.\\pipe\\eye_pipe';
+const SENSOR_PIPE_NAME_PATH = '\\\\.\\pipe\\sensor_pipe';
+
+const EYE_EXIT_CODES = Object.freeze({
+  0: "Eye tracker disconnected",
+  1: "Invalid eye tracker arguments",
+  2: "Eye tracker not found",
+  3: "Failed to open eye tracker pipe",
+  4: "Connection to eye tracker pipe unexpectedly closed",
+  5: "Eye tracker unexpectedly disconnected",
+  99: "Unhandled eye tracker exception"
+});
+
+const ARDUINO_EXIT_CODES = Object.freeze({
+  0: "ECG disconnected",
+  1: "Invalid ECG arguments",
+  2: "ECG FileNotFoundError",
+  3: "Failed to open ECG pipe",
+  4: "Connection to ECG pipe unexpectedly closed",
+  5: "Failed to open ECG serial port",
+  99: "Unhandled ECG exception"
+}); 
+
+const MOVESENSE_EXIT_CODES = Object.freeze({
+    0: "ECG disconnected",
+    1: "Invalid ECG arguments",
+    2: "ECG sensor end with given serial not found",
+    3: "Failed to open ECG pipe",
+    4: "Connection to ECG pipe unexpectedly closed",
+    5: "Failed to open ECG serial port",
+    99: "Unhandled ECG exception"
+});
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -42,6 +86,8 @@ async function createWindow() {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    disconnectIot();
+    localStorage.clear();
     app.quit();
   }
 });
@@ -59,17 +105,21 @@ app.on('ready', async () => {
     }
   }
   createWindow();
+  setupPipeServer(EYE_PIPE_NAME_PATH, 'eye');
+  setupPipeServer(SENSOR_PIPE_NAME_PATH, 'sensor');
 });
 
 if (isDevelopment) {
   if (process.platform === 'win32') {
     process.on('message', (data) => {
       if (data === 'graceful-exit') {
+        localStorage.clear();
         app.quit();
       }
     });
   } else {
     process.on('SIGTERM', () => {
+      localStorage.clear();
       app.quit();
     });
   }
@@ -79,44 +129,55 @@ ipcMain.on('toMain', (event, args) => {
   console.log('[IPC MAIN]', args);
   switch (args.command) {
     case 'sign-in':
-      console.log('sign-in api call for subjectId:', args.subjectId);
+      subjectId = args.subjectId;
+      console.log('[IPC MAIN] sign-in api call for subjectId:', args.subjectId);
       break;
 
     case 'set-ecg-device':
-      console.log('make api call');
+      currentEcgDevice = args.device;
       break;
 
     case 'start-data-collection':
-      console.log(`starting data collection processes for subjectId "${args.subjectId}" using ${args.device} ecg device, performing task "${args.task}"...`);
-      startDataCollection(args.subjectId, args.device, args.task, event);
+      console.log(`[IPC MAIN] starting data collection processes for subjectId "${args.subjectId}" using ${args.device} ecg device, performing task "${args.task}"...`);
+      startDataCollection(args.device, event);
       break;
 
     case 'stop-data-collection':
-      console.log('stopping data collection...');
+      console.log('[IPC MAIN] stopping data collection...');
       stopDataCollection(event);
       break;
 
     case 'update-task':
-      console.log('updating task...');
+      currentTask = args.task;
       break;
 
     case 'setup-iot':
-      console.log('setting up IoT...');
+      console.log('[IPC MAIN] setting up IoT...');
       setupIot(event);
       break;
 
+    case 'setup-eye-tracker':
+      console.log('[IPC MAIN] setting up eye tracker...');
+      setupEyeTracker(event);
+      break;
+
+    case 'setup-sensor':
+      console.log('[IPC MAIN] setting up ECG sensor...');
+      setupSensor(currentEcgDevice, event);
+      break;
+
     case 'disconnect-iot':
-      console.log('disconnecting IoT...');
+      console.log('[IPC MAIN] disconnecting IoT...');
       disconnectIot(event);
       break;
 
     case 'send-iot-message':
-      console.log('sending IoT message...');
+      console.log('[IPC MAIN] sending IoT message...');
       sendIotMessage(args.topic, args.message, event);
       break;
 
     default:
-      console.log('no command given');
+      console.log('[IPC MAIN] no command given');
   }
 });
 
@@ -124,75 +185,91 @@ ipcMain.on('survey', (event, args) => {
   console.log('[IPC MAIN] survey responses received: ', args);
 });
 
-function startDataCollection(subjectId, device, task, event) {
-  let scriptPath;
+function setupEyeTracker(event) {
+  const recordEyePath = path.join(scriptPath, 'record_eye_for_exe.exe');
+  const eyeProcess = spawn('cmd.exe', ['/C', recordEyePath, EYE_PIPE_NAME_PATH]);
 
-  if (isDevelopment) {
-    scriptPath = path.join(__dirname, '..', 'public', 'scripts');
-  } else {
-    scriptPath = path.join(process.resourcesPath, 'scripts');
-  }
+  console.log('Connecting eye tracker...');
+  event.reply('fromMain', { eyeStatus: 'Connecting eye tracker...' });
 
+  eyeProcess.stdout.on('data', (data) => {
+    console.log(`[RECORD_EYE] stdout: ${data}`);
+    // event.reply('fromMain', { eyeStatus: `Record_eye output: ${data.toString()}` });
+  });
+
+  eyeProcess.stderr.on('data', (data) => {
+    console.error(`[RECORD_EYE] stderr: ${data}`);
+    // event.reply('fromMain', { eyeError: `Record_eye error: ${data.toString()}` });
+  });
+
+  eyeProcess.on('close', (code) => {
+    console.log(`[RECORD_EYE] ${EYE_EXIT_CODES[code]}`);
+    event.reply('fromMain', { eyeStatus: `${EYE_EXIT_CODES[code]}` });
+  });
+
+  return eyeProcess;
+}
+
+function setupSensor(device, event) {
   let filename;
+  let sensorArgs;
+  let sensorExitCodes;
 
   switch (device) {
     case 'arduino':
-      filename = 'record_sensor_for_exe.exe';
+      filename = 'record_arduino_sensor_for_exe.exe';
+      const COM_PORT = 'COM4'; // hardcoded
+      sensorArgs = COM_PORT;
+      sensorExitCodes = ARDUINO_EXIT_CODES;
       break;
     case 'movesense':
       filename = 'record_movesense_sensor_for_exe.exe';
+      const END_OF_SERIAL = '234530000211'; // taken from config.bat
+      sensorArgs = END_OF_SERIAL;
+      sensorExitCodes = MOVESENSE_EXIT_CODES;
       break;
     default:
       console.error('[IPC MAIN] invalid device type');
       event.reply('fromMain', { sensorError: 'Invalid device type' });
-      return;
+      return null;
   }
 
-  const COMPUTER_NAME = os.hostname();
-  const END_OF_SERIAL = '234530000211'; // taken from config.bat
-
-  console.log('[IPC MAIN] computer name:', COMPUTER_NAME);
-
-  const recordEyePath = path.join(scriptPath, 'record_eye_for_exe.exe');
-  const eyeProcess = spawn('cmd.exe', ['/K', recordEyePath, COMPUTER_NAME, task, subjectId]);
-
-  eyeProcess.stdout.on('data', (data) => {
-    console.log(`[IPC MAIN] record_eye stdout: ${data}`);
-    event.reply('fromMain', { eyeStatus: `Record_eye output: ${data.toString()}` });
-  });
-
-  eyeProcess.stderr.on('data', (data) => {
-    console.error(`[IPC MAIN] record_eye stderr: ${data}`);
-    event.reply('fromMain', { eyeError: `Record_eye error: ${data.toString()}` });
-  });
-
-  eyeProcess.on('close', (code) => {
-    console.log(`record_eye process exited with code ${code}`);
-    event.reply('fromMain', { eyeStatus: `Record_eye exited with code ${code}` });
-  });
-
   const recordSensorPath = path.join(scriptPath, filename);
-  const sensorProcess = spawn('cmd.exe', ['/K', recordSensorPath, END_OF_SERIAL, COMPUTER_NAME, task, subjectId]);
+  const sensorProcess = spawn('cmd.exe', ['/C', recordSensorPath, sensorArgs, SENSOR_PIPE_NAME_PATH]);
+
+  console.log('Connecting ECG sensor...');
+  event.reply('fromMain', { sensorStatus: 'Connecting ECG sensor...' });
 
   sensorProcess.stdout.on('data', (data) => {
-    console.log(`record_sensor stdout: ${data}`);
-    event.reply('fromMain', { sensorStatus: `Record_sensor output: ${data.toString()}` });
+    console.log(`[RECORD_SENSOR] stdout: ${data}`);
+    // event.reply('fromMain', { sensorStatus: `Record_sensor output: ${data.toString()}` });
   });
 
   sensorProcess.stderr.on('data', (data) => {
-    console.error(`record_sensor stderr: ${data}`);
-    event.reply('fromMain', { sensorError: `Record_sensor error: ${data.toString()}` });
+    console.error(`[RECORD_SENSOR] stderr: ${data}`);
+    // event.reply('fromMain', { sensorError: `Record_sensor error: ${data.toString()}` });
   });
 
   sensorProcess.on('close', (code) => {
-    console.log(`record_sensor process exited with code ${code}`);
-    event.reply('fromMain', { sensorStatus: `Record_sensor exited with code ${code}` });
+    console.log(`${sensorExitCodes[code]}`);
+    event.reply('fromMain', { sensorStatus: `${sensorExitCodes[code]}` });
   });
 
+  return sensorProcess;
+}
+
+function startDataCollection(device, event) {
+  const eyeProcess = setupEyeTracker(event);
+  const sensorProcess = setupSensor(device, event);
+
+  if (!sensorProcess) {
+    return;
+  }
+
   ipcMain.once('stop-data-collection', () => {
-    eyeProcess.kill();
-    sensorProcess.kill();
-    event.reply('fromMain', { sensorStatus: 'Stopped', eyeStatus: 'Stopped' });
+    if (eyeProcess) eyeProcess.kill();
+    if (sensorProcess) sensorProcess.kill();
+    event.reply('fromMain', { sensorStatus: 'ECG disconnected', eyeStatus: 'Eye tracker disconnected' });
   });
 }
 
@@ -200,7 +277,45 @@ function stopDataCollection(event) {
   exec('taskkill /f /im record_eye_for_exe.exe');
   exec('taskkill /f /im record_sensor_for_exe.exe');
   exec('taskkill /f /im record_movesense_sensor_for_exe.exe');
-  event.reply('fromMain', { status: 'data collection stopped' });
+  event.reply('fromMain', { sensorStatus: 'ECG disconnected', eyeStatus: 'Eye tracker disconnected' });
+}
+
+function setupPipeServer(pipeName, type) {
+  const server = net.createServer((stream) => {
+    stream.on('data', (data) => {
+      console.log(`[${type.toUpperCase()} PIPE] ${data}`);
+
+      // convert buffer to string
+      let receivedData = data.toString();
+
+      // append subject ID and task name to data
+      let appendedData = {
+        subjectId: subjectId || 'null subjectId',
+        taskName: currentTask || 'null task',
+        data: receivedData
+      };
+
+      console.log(`[${type.toUpperCase()} PIPE] Appended Data: ${JSON.stringify(appendedData)}`);
+
+      // send appended data to AWS Timestream
+      // ...
+    });
+
+    stream.on('end', () => {
+      console.log(`[${type.toUpperCase()} PIPE] End of data`);
+    });
+  });
+
+  server.listen(pipeName, () => {
+    console.log(`[IPC MAIN] ${type} pipe server listening on ${pipeName}`);
+  });
+
+  server.on('error', (err) => {
+    console.error(`[IPC MAIN] ${type} pipe server error:`, err);
+    BrowserWindow.getAllWindows().forEach(win => {
+      win.webContents.send('fromMain', { [`${type}PipeError`]: err.message });
+    });
+  });
 }
 
 function setupIot(event) {
@@ -214,30 +329,30 @@ function setupIot(event) {
   });
 
   device.on('connect', function() {
-    console.log('Connected to AWS IoT');
+    console.log('[IOT] Connected to AWS IoT');
     event.reply('fromMain', { iotStatus: 'IoT connected' });
   });
 
   device.on('message', function(topic, payload) {
-    console.log('message received:', topic, payload.toString());
+    console.log('[IOT] Message received:', topic, payload.toString());
   });
 
   device.on('error', function(error) {
-    console.error('Error:', error);
+    console.error('[IoT] Error:', error);
   });
 
   device.on('close', function() {
-    console.log('Connection closed');
+    console.log('[IOT] Connection closed');
     event.reply('fromMain', { iotStatus: 'IoT connection closed' });
   });
 
   device.on('reconnect', function() {
-    console.log('Reconnecting');
+    console.log('[IOT] Reconnecting...');
     event.reply('fromMain', { iotStatus: 'IoT reconnecting...' });
   });
 
   device.on('offline', function() {
-    console.log('Offline');
+    console.log('[IOT] Offline');
     event.reply('fromMain', { iotStatus: 'IoT disconnected' });
   });
 }
@@ -245,12 +360,12 @@ function setupIot(event) {
 function disconnectIot(event) {
   if (device) {
     device.end(true, () => {
-      console.log('Disconnected from AWS IoT');
+      console.log('[IOT] Disconnected from AWS IoT');
       event.reply('fromMain', { iotStatus: 'IoT disconnected' });
       device = null;
     });
   } else {
-    console.log('Already disconnected from IoT');
+    console.log('[IOT] Already disconnected from IoT');
   }
 }
 
@@ -258,15 +373,15 @@ function sendIotMessage(topic, message, event) {
   if (device) {
     device.publish(topic, JSON.stringify(message), (err) => {
       if (err) {
-        console.error('Publish error:', err);
-        // event.reply('fromMain', { iotStatus: 'Failed to send IoT message', error: err });
+        console.error('[IOT] Publish error:', err);
+        event.reply('fromMain', { iotStatus: 'Failed to send IoT message', error: err });
       } else {
-        console.log('Message sent to topic:', topic);
-        // event.reply('fromMain', { iotStatus: 'IoT message sent', topic: topic, message: message });
+        console.log('[IOT] Message sent to topic:', topic);
+        event.reply('fromMain', { iotStatus: 'IoT message sent', topic: topic, message: message });
       }
     });
   } else {
-    console.error('IoT device is not connected');
+    console.error('[IOT] IoT device is not connected');
     event.reply('fromMain', { iotStatus: 'IoT disconnected' });
   }
 }

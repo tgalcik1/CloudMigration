@@ -70,11 +70,7 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) {
     next('/signin');
   } else {
-    const subjectId = store.state.subjectId;
-    if (from.name)
-      window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: {subjectId: subjectId, taskState: 'end-task', taskName: from.name}});
-    if (to.name)
-      window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: {subjectId: subjectId, taskState: 'start-task', taskName: to.name}});
+    store.commit('setCurrentTask', to.name);
     next();
   }
 });
