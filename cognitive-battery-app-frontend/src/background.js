@@ -218,7 +218,7 @@ function setupSensor(device, event) {
   switch (device) {
     case 'arduino':
       filename = 'record_arduino_sensor_for_exe.exe';
-      const COM_PORT = 'COM4'; // hardcoded
+      const COM_PORT = 'COM5'; // hardcoded
       sensorArgs = COM_PORT;
       sensorExitCodes = ARDUINO_EXIT_CODES;
       break;
