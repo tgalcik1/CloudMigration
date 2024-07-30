@@ -9,8 +9,10 @@
           <aside style="color: rgba(180, 180, 180, 1)">Select the surveys you would like to complete.</aside>
           <ul class="survey-list">
             <li v-for="(survey, index) in surveys" :key="index">
-              <input type="checkbox" v-model="survey.selected" />
-              {{ survey.title }}
+              <input v-if='index!==2' type="checkbox" v-model="survey.selected" />
+              <input v-if='index===2' type="checkbox" v-model="survey.selected" disabled/>
+              <div v-if='index!==2'>{{ survey.title}}</div>
+              <div v-else style="color: gray">{{ survey.title }}</div>
             </li>
           </ul>
           <div class="navigation-buttons">

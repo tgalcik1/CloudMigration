@@ -18,11 +18,11 @@
               <img src="images/movesense.jpg" alt="Movesense ECG Device Setup" class="step-image">
               <p style="color: rgba(80,80,80,1)">Wrap the strap around your chest, ensuring the electrodes make firm contact with your skin.</p>
             </div>
-            <div @click="selectEcgDevice('ecg3')" :class="['device', { 'grayed-out': selectedEcgDevice !== 'ecg3' }]">
+            <!-- <div @click="selectEcgDevice('ecg3')" :class="['device', { 'grayed-out': selectedEcgDevice !== 'ecg3' }]">
               <button :class="{ active: selectedEcgDevice === 'ecg3' }">ECG Device 3</button>
               <img src="https://placehold.jp/500x500.png" alt="ECG Device 3" class="step-image">
               <p style="color: rgba(80,80,80,1)">(insert directions for ECG device here)</p>
-            </div>
+            </div> -->
           </div>
 
           <!-- Step 2: signal quality check -->
@@ -259,7 +259,7 @@ html, body, #app {
 
 .device-instructions {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   gap: 20px;
   font-size: 14px;
 }
@@ -272,6 +272,7 @@ html, body, #app {
   text-align: center;
   background: white;
   transition: opacity 0.3s ease, border 0.3s ease;
+  max-width: 500px;
 }
 
 .grayed-out:hover {

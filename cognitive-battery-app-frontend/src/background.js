@@ -26,6 +26,9 @@ if (isDevelopment) {
 const EYE_PIPE_NAME_PATH = '\\\\.\\pipe\\eye_pipe';
 const SENSOR_PIPE_NAME_PATH = '\\\\.\\pipe\\sensor_pipe';
 
+let sensorConnected = false;
+let eyeConnected = false;
+
 const EYE_EXIT_CODES = Object.freeze({
   0: "Eye tracker disconnected",
   1: "Invalid eye tracker arguments",
@@ -39,10 +42,11 @@ const EYE_EXIT_CODES = Object.freeze({
 const ARDUINO_EXIT_CODES = Object.freeze({
   0: "ECG disconnected",
   1: "Invalid ECG arguments",
-  2: "ECG FileNotFoundError",
+  2: "Could not open COM port",
   3: "Failed to open ECG pipe",
   4: "Connection to ECG pipe unexpectedly closed",
   5: "Failed to open ECG serial port",
+  6: "Failed to find ECG device within acceptable timeout period",
   99: "Unhandled ECG exception"
 }); 
 
@@ -104,7 +108,7 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString());
     }
   }
-  createWindow();
+  await createWindow();
   setupPipeServer(EYE_PIPE_NAME_PATH, 'eye');
   setupPipeServer(SENSOR_PIPE_NAME_PATH, 'sensor');
 });
@@ -204,6 +208,7 @@ function setupEyeTracker(event) {
 
   eyeProcess.on('close', (code) => {
     console.log(`[RECORD_EYE] ${EYE_EXIT_CODES[code]}`);
+    eyeConnected = false;
     event.reply('fromMain', { eyeStatus: `${EYE_EXIT_CODES[code]}` });
   });
 
@@ -252,6 +257,7 @@ function setupSensor(device, event) {
 
   sensorProcess.on('close', (code) => {
     console.log(`${sensorExitCodes[code]}`);
+    sensorConnected = false;
     event.reply('fromMain', { sensorStatus: `${sensorExitCodes[code]}` });
   });
 
@@ -284,6 +290,22 @@ function setupPipeServer(pipeName, type) {
   const server = net.createServer((stream) => {
     stream.on('data', (data) => {
       console.log(`[${type.toUpperCase()} PIPE] ${data}`);
+      
+      // update device status on first data reception
+      if (type === 'sensor' && !sensorConnected)
+      {
+        sensorConnected = true;
+        BrowserWindow.getAllWindows().forEach(win => {
+          win.webContents.send('fromMain', { sensorStatus: 'ECG connected' });
+        });
+      }
+      if (type === 'eye' && !eyeConnected)
+      {
+        eyeConnected = true;
+        BrowserWindow.getAllWindows().forEach(win => {
+          win.webContents.send('fromMain', { eyeStatus: 'Eye tracker connected' });
+        });
+      }
 
       // convert buffer to string
       let receivedData = data.toString();
@@ -299,6 +321,8 @@ function setupPipeServer(pipeName, type) {
 
       // send appended data to AWS Timestream
       // ...
+
+      // for now, send to a local server via websocket
     });
 
     stream.on('end', () => {

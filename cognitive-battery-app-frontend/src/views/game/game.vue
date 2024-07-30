@@ -2,7 +2,7 @@
   <div class="game-wrapper">
     <div class="game-container">
       <!-- <iframe ref="gameIframe" class="game-iframe" frameborder="0" src="https://itch.io/embed-upload/8647397?color=333333" allowfullscreen=""><a href="https://tjgalcik.itch.io/fps-animations">Play FPS Animations on itch.io</a></iframe> -->
-      <iframe ref="gameIframe" :src="gameUrl" frameborder="0" class="game-iframe"></iframe>
+      <iframe ref="gameIframe" :src="gameUrl" frameborder="0" allowfullscreen class="game-iframe"></iframe>
     </div>
   </div>
 </template>
