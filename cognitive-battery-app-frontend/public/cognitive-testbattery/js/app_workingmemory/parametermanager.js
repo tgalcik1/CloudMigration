@@ -65,6 +65,22 @@ class ParameterManager{
 
       next_trial(){
         this.save();
+
+        // send the current trial data to the parent window
+        window.parent.postMessage(
+          { command: 'working-memory', 
+            blockno: this.blocks[this.blocks.length - 1],
+            difficulty: this.diff[this.diff.length - 1],
+            start_time: this.start_time[this.start_time.length - 1],
+            end_time: this.end_time[this.end_time.length - 1],
+            results_responses: this.results_responses[this.results_responses.length - 1],
+            results_rt: this.results_rt[this.results_rt.length - 1],
+            results_targetvalue_stim: this.results_targetvalue_stim[this.results_targetvalue_stim.length - 1],
+            results_num_stim: this.results_num_stim[this.results_num_stim.length - 1],
+            results_correct: this.results_correct[this.results_correct.length - 1]
+          }, 
+        '*');
+
         //set the next trial parameters 
         this.ind_stimcond ++;
         this.flag_load = false;

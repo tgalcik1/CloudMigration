@@ -39,13 +39,37 @@ export default {
   },
   methods: {
     handleIframeMessage(event) {
-      if (event.data.command === 'navigate') {
-        console.log('Update task:', event.data.task);
-        window.api.send('toMain', { command: 'update-task', task: event.data.task});
-      }
-      if (event.data.command === 'enumeration'){
-        console.log('Enumeration results:', event.data);
-        window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: event.data});
+      switch (event.data.command) {
+        case 'navigate':
+          console.log('Update task:', event.data.task);
+          window.api.send('toMain', { command: 'update-task', task: event.data.task});
+          break;
+        case 'enumeration':
+          event.data.Userid = this.subjectId; //append subjectid
+          // also need to append computer name
+
+          delete event.data.command; // dont care about command (task) anymore since we are publishing to specific topics
+          console.log('Enumeration results:', event.data);
+          window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: event.data});
+          break;
+        case 'task-switching':
+          event.data.Userid = this.subjectId;
+          // also need to append computer name
+
+          delete event.data.command;
+          console.log('Task-switching results:', event.data);
+          window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: event.data});
+          break;
+        case 'working-memory':
+          event.data.Userid = this.subjectId;
+          // also need to append computer name
+
+          delete event.data.command;
+          console.log('Working-memory results:', event.data);
+          window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: event.data});
+          break;
+        default:
+          break;
       }
     }
   }

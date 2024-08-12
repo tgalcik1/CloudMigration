@@ -56,6 +56,21 @@ class ParameterManager{
     
     next_trial(){
       this.save(); //This task saves the data once per block.
+
+      // send the current trial data to the parent window
+      window.parent.postMessage(
+        { command: 'task-switching', 
+          blockno: this.blockno[this.blockno.length - 1],
+          difficulty: this.diff[this.diff.length - 1],
+          start_time: this.startt[this.startt.length - 1],
+          end_time: this.endt[this.endt.length - 1],
+          results_responses: this.results_responses[this.results_responses.length - 1],
+          results_rt: this.results_rt[this.results_rt.length - 1],
+          results_ind_switch: this.results_ind_switch[this.results_ind_switch.length - 1],
+          results_indtask: this.results_indtask[this.results_indtask.length - 1],
+          results_trial_target: this.results_trial_target[this.results_trial_target.length - 1]
+        }, 
+      '*');
   
       //set the next trial parameters
       this.set_stimlusorder_trial();

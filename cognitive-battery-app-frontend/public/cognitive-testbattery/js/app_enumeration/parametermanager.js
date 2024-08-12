@@ -51,6 +51,20 @@ class ParameterManager{
 
     next_trial(){
       this.save(); 
+
+      // send current trial data to the parent window
+      window.parent.postMessage(
+        { command: 'enumeration', 
+          blockno: this.blocks[this.blocks.length - 1],
+          difficulty: this.diff[this.diff.length - 1],
+          start_time: this.start_time[this.start_time.length - 1],
+          end_time: this.end_time[this.end_time.length - 1],
+          results_responses: this.results_responses[this.results_responses.length - 1],
+          results_rt: this.results_rt[this.results_rt.length - 1],
+          results_targetvalue: this.results_targetvalue[this.results_targetvalue.length - 1]
+        }, 
+      '*');
+
       //set the next trial parameters
       this.flag_load = false;
       this.ind_stimcond ++;
@@ -69,6 +83,7 @@ class ParameterManager{
   
     next_block(){
       this.save(); 
+
       //set the next block parameters
       this.flag_load = false;
       this.repetition ++;

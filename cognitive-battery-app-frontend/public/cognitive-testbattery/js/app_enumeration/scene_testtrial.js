@@ -151,17 +151,7 @@ button_ok.mousePressed(()=>{
   div_ticks.hide();
   array_span.forEach(element => element.hide());
   sel.hide();
-  Time.update();
-  window.parent.postMessage(
-    { command: 'enumeration', 
-      blockno: Params.blocks[Params.blocks.length - 1],
-      difficulty: Params.diff[Params.diff.length - 1],
-      start_time: Params.start_time[Params.start_time.length - 1],
-      end_time: Params.end_time[Params.end_time.length - 1],
-      results_responses: Params.results_responses[Params.results_responses.length - 1],
-      results_rt: Params.results_rt[Params.results_rt.length - 1],
-      results_targetvalue: Params.results_targetvalue[Params.results_targetvalue.length - 1]
-    }, '*');    
+  Time.update();    
   });
 /*
 for (let i=0; i<max_answer; i++){
