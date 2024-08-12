@@ -62,6 +62,7 @@ export default {
   transition: width 0.3s ease;
   margin-top: 1px;
   font-size: 12px;
+  z-index: 1000;
 }
 
 .sidebar-container.collapsed {

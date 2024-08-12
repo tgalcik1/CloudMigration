@@ -105,9 +105,13 @@ class TimeManager{
             button_start.show();
           }else{
             if (flag_break==true){
+              // send a message to parent window indicating its time for a post-trial survey
+              window.parent.postMessage({ command: 'break-survey'}, '*');
               this.scene = this.scene_break;
               button_start.show();
             }else{
+              // send a message to parent window indicating that we should display the post-game survey
+              window.parent.postMessage({ command: 'end-survey'}, '*');
               this.scene = this.end_scene;
               button_end.show();
             }

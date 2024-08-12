@@ -125,23 +125,10 @@ function scene_end() {
   pop();
    noLoop(); // Stop the drawing loop if necessary
   // clear(); // Clear the canvas
-  
-  // Create and display an HTML element for the survey link
-  let surveyLinkDiv = createDiv('').position(550, 400); // Adjust position as needed
-  let surveyLink = createA('https://umbc.co1.qualtrics.com/jfe/form/SV_eRIXtaB8qp3m5Xo', 'Please complete the survey before ending the experiment.', '_blank');
-  surveyLink.parent(surveyLinkDiv);
-  surveyLink.style('font-size', '18px');
-  surveyLink.style('color', '#0000FF');
-  surveyLink.style('text-decoration', 'underline');
 
   // Adjust the END button's position and make it visible
   button_end.position(width / 2 - button_end.size().width / 2, height / 2 + 100); // Adjust Y position as needed
-  button_end.hide();
-  surveyLink.mousePressed(function() {
-    // Show the 'END' button when the survey link is clicked
-    button_end.show();
-  });
-
+  button_end.show();
 }
 function create_end_button(){
   button_end = createButton('END');
@@ -179,69 +166,69 @@ function quit_task(){
   post('exit_view_cognitive_task', parameters_to_save, 'post');
 */
  
-var data= [];
-var len=Params.blockno.length;
+// var data= [];
+// var len=Params.blockno.length;
 
 
-for(let i=0;i<len;i++)
-{
-  let trial_data= {
-    'Userid': userid,
-    'Blockno': Params.blockno[i],
-    'Difficulty': Params.diff[i],
-    'Start_time': Params.startt[i],
-    'End_time': Params.endt[i],
-    'Results_Responses': Params.results_responses[i],
-    'Results_rt': Params.results_rt[i],
-    'Results_ind_switch': Params.results_ind_switch[i],
-    'Results_indtask': Params.results_indtask[i],
-    'Results_trail_target': Params.results_trial_target[i]
-  };
+// for(let i=0;i<len;i++)
+// {
+//   let trial_data= {
+//     'Userid': userid,
+//     'Blockno': Params.blockno[i],
+//     'Difficulty': Params.diff[i],
+//     'Start_time': Params.startt[i],
+//     'End_time': Params.endt[i],
+//     'Results_Responses': Params.results_responses[i],
+//     'Results_rt': Params.results_rt[i],
+//     'Results_ind_switch': Params.results_ind_switch[i],
+//     'Results_indtask': Params.results_indtask[i],
+//     'Results_trail_target': Params.results_trial_target[i]
+//   };
 
-  data.push(trial_data);
-  if(Params.results_indtask[i]==1)
-  { 
-    if(Params.results_trial_target[i]>5 && Params.results_responses[i]==2)
-    {
-      Params.score=Params.score+1;
-    }
-    else if(Params.results_trial_target[i]<5 && Params.results_responses[i]==1)
-    {
-      Params.score=Params.score+1;
-    }
-    else if(Params.results_responses[i]==0){
-      Params.notresponded=Params.notresponded+1;
-    }
+//   data.push(trial_data);
+//   if(Params.results_indtask[i]==1)
+//   { 
+//     if(Params.results_trial_target[i]>5 && Params.results_responses[i]==2)
+//     {
+//       Params.score=Params.score+1;
+//     }
+//     else if(Params.results_trial_target[i]<5 && Params.results_responses[i]==1)
+//     {
+//       Params.score=Params.score+1;
+//     }
+//     else if(Params.results_responses[i]==0){
+//       Params.notresponded=Params.notresponded+1;
+//     }
 
-  }
-  else if(Params.results_indtask[i]==0)
-  {
-    if(Params.results_trial_target[i]%2==0 && Params.results_responses[i]==2)
-    {
-      Params.score=Params.score+1;
-    }
-    else if(Params.results_trial_target[i]%2!=0 && Params.results_responses[i]==1)
-    {
-      Params.score=Params.score+1;
-    }
-    else if(Params.results_responses[i]==0){
-      Params.notresponded=Params.notresponded+1;
-    }
-  }
+//   }
+//   else if(Params.results_indtask[i]==0)
+//   {
+//     if(Params.results_trial_target[i]%2==0 && Params.results_responses[i]==2)
+//     {
+//       Params.score=Params.score+1;
+//     }
+//     else if(Params.results_trial_target[i]%2!=0 && Params.results_responses[i]==1)
+//     {
+//       Params.score=Params.score+1;
+//     }
+//     else if(Params.results_responses[i]==0){
+//       Params.notresponded=Params.notresponded+1;
+//     }
+//   }
  
-} 
+// } 
 
-const currentDate = new Date();
-const formattedDate = currentDate.toISOString().replace(/:/g, '-').replace(/\./g, '-');
+// const currentDate = new Date();
+// const formattedDate = currentDate.toISOString().replace(/:/g, '-').replace(/\./g, '-');
     
-const fileName = `${userid}_`+'taskswitching'+`_${formattedDate}`;
+// const fileName = `${userid}_`+'taskswitching'+`_${formattedDate}`;
     
-// console.log(fileName);
+// // console.log(fileName);
 
-// alert("Your score is : "+Params.score+"You have not responded to "+Params.notresponded+" No of trials");
+// // alert("Your score is : "+Params.score+"You have not responded to "+Params.notresponded+" No of trials");
  
-    //for loacl debugging
-  exportCSV(data,',', fileName);
+//     //for loacl debugging
+//   exportCSV(data,',', fileName);
     
     location.href='../include/main.html'
 

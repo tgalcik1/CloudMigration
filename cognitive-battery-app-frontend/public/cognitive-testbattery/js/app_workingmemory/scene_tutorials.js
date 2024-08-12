@@ -226,42 +226,6 @@ function scene_break() {
     // Adjust the y-coordinate for each subsequent piece of text and the link
     let currentY = pos_tutorialtext_y3 + 60; // Increment this to move the next element down
 
-    // Text for "Please use the below link to complete the survey."
-    push();
-    fill(col_tutorialtext);
-    textSize(size_tutorialtext);
-    textAlign(CENTER);
-    textFont(text_font);
-    text(text_tutorial_5_1, pos_tutorialtext_x, currentY);
-    pop();
-
-    // Increment currentY for the link
-    currentY += 45;
-
-    linkRect = {
-        x: pos_tutorialtext_x - textWidth(text_tutorial_6_3)/4, // Adjust as needed
-        y: currentY, // Adjust as needed
-        width: 300,
-        height: 40,
-        url: text_tutorial_6_3
-    };
-
-    // Draw the rectangle link
-    push();
-    noFill(); // No fill for complete transparency
-    // stroke(255); // White border
-    // strokeWeight(1);// Semi-transparent fill
-    noStroke();
-    rect(linkRect.x, linkRect.y, linkRect.width, linkRect.height);
-    fill(0, 0, 255); 
-    textSize(size_tutorialtext);
-    textAlign(CENTER, CENTER);
-    text("https://umbc.co1.qualtrics.com/jfe/form/SV_e2kGEylTn4J7G9E", linkRect.x + linkRect.width / 2, linkRect.y + linkRect.height / 2);
-    pop();
-
-    // Increment currentY for the next block of text
-    currentY += 60;
-
     // Text for "Thank you for your effort. When you are ready,"
     push();
     fill(col_tutorialtext);
@@ -288,25 +252,10 @@ function scene_break() {
 
     // Position the start button
     button_start.position(x_start, currentY);
-    if (
-      mouseX >= linkRect.x &&
-      mouseX <= linkRect.x + linkRect.width &&
-      mouseY >= linkRect.y &&
-      mouseY <= linkRect.y + linkRect.height
-  ) {
-      window.open(linkRect.url, '_blank');
-      linkRect = null; // Remove the link rectangle
-      count++;
-  }
-  if (count>0)
-  {
-      button_start.show();
-      // count=0;
-  }
-    // button_start.show();
+    button_start.show();
 
     //buttons
-  button_start.mousePressed(()=>{
+    button_start.mousePressed(()=>{
     button_start.hide();
     count=0;
     fullscreen(true);

@@ -223,41 +223,6 @@ function scene_break() {
     // Adjust the y-coordinate for each subsequent piece of text and the link
     let currentY = pos_tutorialtext_y3 + 60; // Increment this to move the next element down
 
-    // Text for "Please use the below link to complete the survey."
-    push();
-    fill(col_tutorialtext);
-    textSize(size_tutorialtext);
-    textAlign(CENTER);
-    textFont(text_font);
-    text(text_tutorial_5_1, pos_tutorialtext_x, currentY);
-    pop();
-
-    // Increment currentY for the link
-    currentY += 45;
-
-    linkRect = {
-        xaxis: pos_tutorialtext_x - textWidth(text_tutorial_6_3)/3, // Adjust as needed
-        yaxis: currentY, // Adjust as needed
-        width: 300,
-        height: 40,
-        url: text_tutorial_6_3
-    };
-
-    // Draw the rectangle link
-    push();
-    noFill(); // No fill for complete transparency
-    // stroke(255); // White border
-    // strokeWeight(1);// Semi-transparent fill
-    rect(linkRect.xaxis, linkRect.yaxis, linkRect.width, linkRect.height);
-    fill(0, 0, 255); 
-    textSize(size_tutorialtext);
-    textAlign(CENTER, CENTER);
-    text("https://umbc.co1.qualtrics.com/jfe/form/SV_3IwcjNOUzJCN954", linkRect.xaxis + linkRect.width / 2, linkRect.yaxis + linkRect.height / 2);
-    pop();
-
-    // Increment currentY for the next block of text
-    currentY += 60;
-
     // Text for "Thank you for your effort. When you are ready,"
     push();
     fill(col_tutorialtext);
@@ -283,22 +248,7 @@ function scene_break() {
     currentY += 60;
     console.log(count);
     button_start.position(x_start, currentY);
-    if (
-        mouseX >= linkRect.xaxis &&
-        mouseX <= linkRect.xaxis + linkRect.width &&
-        mouseY >= linkRect.yaxis &&
-        mouseY <= linkRect.yaxis + linkRect.height
-    ) {
-        window.open(linkRect.url, '_blank');
-        // linkRect = null; // Remove the link rectangle
-        // Position the start button
-        console.log("hellooo");
-        count++;
-    } 
-    if (count>0)
-    {
-        button_start.show();
-    }
+    button_start.show();
 
     button_start.mousePressed(()=>{
         button_start.hide();

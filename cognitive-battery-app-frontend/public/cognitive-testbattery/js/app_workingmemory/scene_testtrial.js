@@ -161,22 +161,10 @@ function scene_end() {
 
    noLoop(); // Stop the drawing loop if necessary
   // clear(); // Clear the canvas
-  
-  // Create and display an HTML element for the survey link
-  let surveyLinkDiv = createDiv('').position(550, 400); // Adjust position as needed
-  let surveyLink = createA('https://umbc.co1.qualtrics.com/jfe/form/SV_e2kGEylTn4J7G9E', 'Please complete the survey before ending the experiment.', '_blank');
-  surveyLink.parent(surveyLinkDiv);
-  surveyLink.style('font-size', '18px');
-  surveyLink.style('color', '#0000FF');
-  surveyLink.style('text-decoration', 'underline');
 
   // Adjust the END button's position and make it visible
   button_end.position(width / 2 - button_end.size().width / 2, height / 2 + 100); // Adjust Y position as needed
-  button_end.hide();
-  surveyLink.mousePressed(function() {
-    // Show the 'END' button when the survey link is clicked
-    button_end.show();
-  });
+  button_end.show();
 }
 
 
@@ -211,50 +199,50 @@ function quit_task(){
   }
   post('exit_view_cognitive_task', parameters_to_save, 'post');
 */
-var workingmem_data=[];
-var len=Params.blocks.length;
-for(let i=0;i<len;i++)
-{
-  let workingmemtrial_data={
-    'Userid' : userid,
-    'BlockNo': Params.blocks[i],
-    'Difficulty' : Params.diff[i],
-    'Start_time' : Params.start_time[i],
-    'End_time':Params.end_time[i],
-    'Results_responses' :'',
-    'Results_rt' : Params.results_rt[i],
-    'Results_targetvalue_stim' : Params.results_targetvalue_stim[i],
-    'Results_num_stim' : Params.results_num_stim[i],
-    'Results_correct':Params.results_correct[i] 
-  }
-  if (Array.isArray(Params.results_responses[i])) { //loop over the array to join the results into a string 
-    workingmemtrial_data['Results_responses'] = Params.results_responses[i].join("-");
-  } else {
-    workingmemtrial_data['Results_responses'] = Params.results_responses[i];
-  }
-  if(Array.isArray(Params.results_targetvalue_stim[i])){
-    workingmemtrial_data['Results_targetvalue_stim'] = Params.results_targetvalue_stim[i].join("-");
-  }
-  else{
-    workingmemtrial_data['Results_targetvalue_stim'] = Params.results_targetvalue_stim[i];
-  }
-  workingmem_data.push(workingmemtrial_data);
-  // alert(JSON.stringify(workingmemtrial_data));
-  if(Params.results_correct[i]==1)
-  {
-    Params.score=Params.score+1;
-  }
-}
+// var workingmem_data=[];
+// var len=Params.blocks.length;
+// for(let i=0;i<len;i++)
+// {
+//   let workingmemtrial_data={
+//     'Userid' : userid,
+//     'BlockNo': Params.blocks[i],
+//     'Difficulty' : Params.diff[i],
+//     'Start_time' : Params.start_time[i],
+//     'End_time':Params.end_time[i],
+//     'Results_responses' :'',
+//     'Results_rt' : Params.results_rt[i],
+//     'Results_targetvalue_stim' : Params.results_targetvalue_stim[i],
+//     'Results_num_stim' : Params.results_num_stim[i],
+//     'Results_correct':Params.results_correct[i] 
+//   }
+//   if (Array.isArray(Params.results_responses[i])) { //loop over the array to join the results into a string 
+//     workingmemtrial_data['Results_responses'] = Params.results_responses[i].join("-");
+//   } else {
+//     workingmemtrial_data['Results_responses'] = Params.results_responses[i];
+//   }
+//   if(Array.isArray(Params.results_targetvalue_stim[i])){
+//     workingmemtrial_data['Results_targetvalue_stim'] = Params.results_targetvalue_stim[i].join("-");
+//   }
+//   else{
+//     workingmemtrial_data['Results_targetvalue_stim'] = Params.results_targetvalue_stim[i];
+//   }
+//   workingmem_data.push(workingmemtrial_data);
+//   // alert(JSON.stringify(workingmemtrial_data));
+//   if(Params.results_correct[i]==1)
+//   {
+//     Params.score=Params.score+1;
+//   }
+// }
 
-// alert("Your score is:"+ Params.score);
-const currentDate = new Date();
-const formattedDate = currentDate.toISOString().replace(/:/g, '-').replace(/\./g, '-');
+// // alert("Your score is:"+ Params.score);
+// const currentDate = new Date();
+// const formattedDate = currentDate.toISOString().replace(/:/g, '-').replace(/\./g, '-');
     
-const fileName = `${userid}_`+'workingmemory'+`_${formattedDate}`;
+// const fileName = `${userid}_`+'workingmemory'+`_${formattedDate}`;
     
-console.log(fileName); 
-    //for loacl debugging
-  exportCSV(workingmem_data,',', fileName);
+// console.log(fileName); 
+//     //for loacl debugging
+//   exportCSV(workingmem_data,',', fileName);
   location.href='../include/main.html'
   //
 
