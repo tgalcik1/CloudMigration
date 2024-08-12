@@ -10,6 +10,7 @@ import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const awsIot = require('aws-iot-device-sdk');
 const fs = require('fs');
+import axios from 'axios';
 
 let device = null;
 let subjectId = null;
@@ -215,12 +216,14 @@ function setupEyeTracker(event) {
   return eyeProcess;
 }
 
-function setupSensor(device, event) {
+function setupSensor(ecgDevice, event) {
   let filename;
   let sensorArgs;
   let sensorExitCodes;
 
-  switch (device) {
+  console.log(ecgDevice);
+
+  switch (ecgDevice) {
     case 'arduino':
       filename = 'record_arduino_sensor_for_exe.exe';
       const COM_PORT = 'COM5'; // hardcoded
@@ -307,25 +310,41 @@ function setupPipeServer(pipeName, type) {
         });
       }
 
-      // convert buffer to string
-      let receivedData = data.toString();
+      // console.log(`[${type.toUpperCase()} PIPE] Appended Data: ${JSON.stringify(appendedData)}`);
 
-      // append subject ID and task name to data
-      let appendedData = {
-        subjectId: subjectId || 'null subjectId',
-        taskName: currentTask || 'null task',
-        data: receivedData
-      };
+      // publish appended data to AWS IoT
+      if (type === 'eye')
+      {
+        let transformedData = {
+          Computer_name: '',
+          Subject_id: subjectId || 'null subjectId',
+          Game_type: currentTask || 'null task',
+          Timestamp: data.Timestamp || 'null timestamp',
+          Gaze_X: data.Gaze_X || 'null gaze_x',
+          Gaze_Y: data.Gaze_Y || 'null gaze_y',
+          Pupil_left: data.Pupil_left || 'null pupil_left',
+          Pupil_right: data.Pupil_right || 'null pupil_right'
+        };
+        sendIotMessage('eye', transformedData);
+      }
+      else if (type === 'sensor')
+      {
+        let transformedData = {
+          Computer_name: '',
+          Subject_id: subjectId || 'null subjectId',
+          Game_type: currentTask || 'null task',
+          Timestamp: data.Timestamp || 'null timestamp',
+          ecg_data: data.ecg_data || 'null ecg_data',
+          eda_data: data.eda_data || 'null eda_data'
+        };
+        sendIotMessage('ecg', transformedData);
+      }
 
-      console.log(`[${type.toUpperCase()} PIPE] Appended Data: ${JSON.stringify(appendedData)}`);
-
-      // send appended data to AWS Timestream
-      // ...
-
-      // for now, send to a local server via websocket
     });
 
     stream.on('end', () => {
+      if (type === 'sensor') sensorConnected = false;
+      if (type === 'eye') eyeConnected = false;
       console.log(`[${type.toUpperCase()} PIPE] End of data`);
     });
   });
@@ -393,19 +412,16 @@ function disconnectIot(event) {
   }
 }
 
-function sendIotMessage(topic, message, event) {
+function sendIotMessage(topic, message) {
   if (device) {
     device.publish(topic, JSON.stringify(message), (err) => {
       if (err) {
         console.error('[IOT] Publish error:', err);
-        event.reply('fromMain', { iotStatus: 'Failed to send IoT message', error: err });
       } else {
         console.log('[IOT] Message sent to topic:', topic);
-        event.reply('fromMain', { iotStatus: 'IoT message sent', topic: topic, message: message });
       }
     });
   } else {
     console.error('[IOT] IoT device is not connected');
-    event.reply('fromMain', { iotStatus: 'IoT disconnected' });
   }
 }

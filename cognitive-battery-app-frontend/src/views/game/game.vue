@@ -43,6 +43,10 @@ export default {
         console.log('Update task:', event.data.task);
         window.api.send('toMain', { command: 'update-task', task: event.data.task});
       }
+      if (event.data.command === 'enumeration'){
+        console.log('Enumeration results:', event.data);
+        window.api.send('toMain', { command: 'send-iot-message', topic: 'sdk/test/js', message: event.data});
+      }
     }
   }
 };
