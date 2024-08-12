@@ -64,7 +64,7 @@ export default {
   name: "GameView",
   data() {
     return {
-      isSurveyVisible: true,
+      isSurveyVisible: false,
       showThankYouMessage: false,
       surveyAnswers: Array(5).fill(null),
       surveyQuestions: [
@@ -144,7 +144,7 @@ export default {
           console.log("Enumeration results:", event.data);
           window.api.send("toMain", {
             command: "send-iot-message",
-            topic: "sdk/test/js",
+            topic: "game/enumeration",
             message: event.data,
           });
           break;

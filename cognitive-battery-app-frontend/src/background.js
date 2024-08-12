@@ -226,7 +226,7 @@ function setupSensor(ecgDevice, event) {
   switch (ecgDevice) {
     case 'arduino':
       filename = 'record_arduino_sensor_for_exe.exe';
-      const COM_PORT = 'COM5'; // hardcoded
+      const COM_PORT = 'COM4'; // hardcoded
       sensorArgs = COM_PORT;
       sensorExitCodes = ARDUINO_EXIT_CODES;
       break;
@@ -325,7 +325,7 @@ function setupPipeServer(pipeName, type) {
           Pupil_left: data.Pupil_left || 'null pupil_left',
           Pupil_right: data.Pupil_right || 'null pupil_right'
         };
-        sendIotMessage('eye', transformedData);
+        sendIotMessage('sensor/eye', transformedData);
       }
       else if (type === 'sensor')
       {
@@ -337,7 +337,17 @@ function setupPipeServer(pipeName, type) {
           ecg_data: data.ecg_data || 'null ecg_data',
           eda_data: data.eda_data || 'null eda_data'
         };
-        sendIotMessage('ecg', transformedData);
+        sendIotMessage('sensor/ecg', transformedData);
+
+//         [SENSOR PIPE] {"data_type": "Heart_Data", "Timestamp": 1723497476939.4546, "ecg_data": 209.0}
+// {
+//   Computer_name: '',
+//   Subject_id: 'test123',
+//   Game_type: 'Setup',
+//   Timestamp: 'null timestamp',
+//   ecg_data: 'null ecg_data',
+//   eda_data: 'null eda_data'
+// }
       }
 
     });

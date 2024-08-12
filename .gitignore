@@ -28,7 +28,4 @@ node_modules
 
 cognitive-battery-app-frontend/public/cognitive-testbattery/data
 
-cognitive-battery-app-frontend/iot
-
-.env.development
 .env.production
