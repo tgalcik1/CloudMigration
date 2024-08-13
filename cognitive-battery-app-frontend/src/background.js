@@ -341,16 +341,54 @@ function setupPipeServer(pipeName, type) {
         }
         else if (type === 'sensor')
         {
-          console.log(objString)
-          let transformedData = {
-            timestamp: jsonData.Timestamp || 'null timestamp',
-            computer_name: '',
-            user_id: subjectId || 'null subjectId',
-            game_type: currentTask || 'null task',
-            ecg_data: jsonData.ecg_data || 0,
-          };
-          //console.log(transformedData)
-          sendIotMessage('sensor/ecg', transformedData);
+          // movesense ecg
+          if (currentEcgDevice === 'movesense')
+          {
+            // heart data
+            if (jsonData.data_type === 'Heart_Data')
+            {
+              let transformedData = {
+                timestamp: jsonData.Timestamp || 'null timestamp',
+                computer_name: '',
+                user_id: subjectId || 'null subjectId',
+                game_type: currentTask || 'null task',
+                ecg_data: jsonData.ecg_data || 0,
+              };
+              sendIotMessage('sensor/ecg', transformedData);
+            }
+            // IMU9 data
+            else if (jsonData.data_type === 'IMU9') {
+              let transformedData = {
+                timestamp: jsonData.Timestamp || 'null timestamp',
+                computer_name: '',
+                user_id: subjectId || 'null subjectId',
+                game_type: currentTask || 'null task',
+                acc_x: jsonData.acc_x || 0,
+                acc_y: jsonData.acc_y || 0,
+                acc_z: jsonData.acc_z || 0,
+                gyro_x: jsonData.gyro_x || 0,
+                gyro_y: jsonData.gyro_y || 0,
+                gyro_z: jsonData.gyro_z || 0,
+                magn_x: jsonData.magn_x || 0,
+                magn_y: jsonData.magn_y || 0,
+                magn_z: jsonData.magn_z || 0
+              };
+              sendIotMessage('sensor/imu9', transformedData);
+            }
+          }
+          // arduino ecg
+          else
+          {
+            let transformedData = {
+              timestamp: jsonData.Timestamp || 'null timestamp',
+              computer_name: '',
+              user_id: subjectId || 'null subjectId',
+              game_type: currentTask || 'null task',
+              ecg_data: jsonData.ecg_data || 0,
+            };
+            //console.log(transformedData)
+            sendIotMessage('sensor/ecg', transformedData);
+          }
         }
       })
     });
@@ -437,7 +475,7 @@ function disconnectIot(event) {
 
 function sendIotMessage(topic, message) {
   if (device) {
-    //console.log(message);
+    console.log('[IOT] Sending message: ', message);
     device.publish(topic, JSON.stringify(message), (err) => {
       if (err) {
         console.error('[IOT] Publish error:', err);

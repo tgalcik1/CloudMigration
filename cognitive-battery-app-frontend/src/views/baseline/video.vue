@@ -1,13 +1,6 @@
 <template>
   <div v-if="isVisible" class="video-wrapper" ref="videoWrapper">
     <div class="baseline-container">
-      <!-- <iframe class="video-frame"
-        src="https://www.youtube.com/embed/h_lQ2tMgLVM?si=UwVMZhs95zvIJTvj&amp;start=7&amp;autoplay=1&amp;mute=1"
-        allow="autoplay"
-        frameborder="0"
-        allowfullscreen
-        >
-      </iframe> -->
       <!-- <p>DEBUG: Time remaining: {{ formatTime(remainingTime) }}</p> -->
     </div>
   </div>
@@ -18,7 +11,7 @@ export default {
   name: 'Video',
   data() {
     return {
-      remainingTime: 10,
+      remainingTime: 60 * 5, // 5 minutes
       isVisible: true,
       hueRotation: 0,
       isResetting: false
