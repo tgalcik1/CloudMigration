@@ -130,6 +130,7 @@ if (isDevelopment) {
   }
 }
 
+// IPC event listeners - handle commands from the renderer process
 ipcMain.on('toMain', (event, args) => {
   console.log('[IPC MAIN]', args);
   switch (args.command) {
