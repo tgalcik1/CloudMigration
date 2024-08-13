@@ -279,6 +279,7 @@ function startDataCollection(device, event) {
   ipcMain.once('stop-data-collection', () => {
     if (eyeProcess) eyeProcess.kill();
     if (sensorProcess) sensorProcess.kill();
+    stopDataCollection();
     event.reply('fromMain', { sensorStatus: 'ECG disconnected', eyeStatus: 'Eye tracker disconnected' });
   });
 }
@@ -340,6 +341,7 @@ function setupPipeServer(pipeName, type) {
         }
         else if (type === 'sensor')
         {
+          console.log(objString)
           let transformedData = {
             timestamp: jsonData.Timestamp || 'null timestamp',
             computer_name: '',
@@ -354,8 +356,18 @@ function setupPipeServer(pipeName, type) {
     });
 
     stream.on('end', () => {
-      if (type === 'sensor') sensorConnected = false;
-      if (type === 'eye') eyeConnected = false;
+      if (type === 'sensor'){
+        sensorConnected = false;
+        BrowserWindow.getAllWindows().forEach(win => {
+          win.webContents.send('fromMain', { sensorStatus: 'ECG disconnected' });
+        });
+      }
+      if (type === 'eye'){
+        eyeConnected = false;
+        BrowserWindow.getAllWindows().forEach(win => {
+          win.webContents.send('fromMain', { sensorStatus: 'Eye tracker disconnected' });
+        });
+      } 
       console.log(`[${type.toUpperCase()} PIPE] End of data`);
     });
   });
@@ -425,12 +437,12 @@ function disconnectIot(event) {
 
 function sendIotMessage(topic, message) {
   if (device) {
-    console.log(message);
+    //console.log(message);
     device.publish(topic, JSON.stringify(message), (err) => {
       if (err) {
         console.error('[IOT] Publish error:', err);
       } else {
-        console.log('[IOT] Message sent to topic:', topic);
+        //console.log('[IOT] Message sent to topic:', topic);
       }
     });
   } else {
