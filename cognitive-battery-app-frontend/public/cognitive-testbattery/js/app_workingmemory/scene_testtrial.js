@@ -151,6 +151,7 @@ function record_response(){
 //   pop();
 // }
 function scene_end() {
+  fullscreen(false);
   push();
   fill(col_text);
   noStroke();

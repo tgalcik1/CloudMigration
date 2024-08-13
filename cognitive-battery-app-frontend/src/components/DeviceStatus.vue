@@ -2,7 +2,7 @@
   <div class="status-container" v-if="isRouteInList(['Setup', 'Baseline Instructions', 'Baseline', 'Instructions', 'Game'])">
 
     <!-- ecg icons and status message -->
-    <i v-if="statusMessageECG === 'ECG connected'" class="fa-solid heart-pulse"></i>
+    <i v-if="statusMessageECG === 'ECG connected'" class="fa-solid fa-heart-pulse"></i>
     <i v-else-if="statusMessageECG === 'Connecting ECG sensor...'" class="fa-solid fa-spinner fa-spin"></i>
     <i v-else-if="statusMessageECG === 'ECG disconnected'" class="fa-solid fa-heart-circle-xmark"></i>
     <i v-else class="fa-solid fa-heart-circle-exclamation" style="color: #ff5b5b"></i>

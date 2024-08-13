@@ -32,7 +32,7 @@ let eyeConnected = false;
 
 const EYE_EXIT_CODES = Object.freeze({
   0: "Eye tracker disconnected",
-  1: "Invalid eye tracker arguments",
+  1: "Eye tracker setup interrupted", //"Invalid eye tracker arguments",
   2: "Eye tracker not found",
   3: "Failed to open eye tracker pipe",
   4: "Connection to eye tracker pipe unexpectedly closed",
@@ -42,7 +42,7 @@ const EYE_EXIT_CODES = Object.freeze({
 
 const ARDUINO_EXIT_CODES = Object.freeze({
   0: "ECG disconnected",
-  1: "Invalid ECG arguments",
+  1: "ECG setup interrupted", //"Invalid ECG arguments",
   2: "Could not open COM port",
   3: "Failed to open ECG pipe",
   4: "Connection to ECG pipe unexpectedly closed",
@@ -53,7 +53,7 @@ const ARDUINO_EXIT_CODES = Object.freeze({
 
 const MOVESENSE_EXIT_CODES = Object.freeze({
     0: "ECG disconnected",
-    1: "Invalid ECG arguments",
+    1: "ECG setup interrupted", //"Invalid ECG arguments",
     2: "ECG sensor end with given serial not found",
     3: "Failed to open ECG pipe",
     4: "Connection to ECG pipe unexpectedly closed",
@@ -310,9 +310,7 @@ function setupPipeServer(pipeName, type) {
         });
       }
 
-      // console.log(`[${type.toUpperCase()} PIPE] Appended Data: ${JSON.stringify(appendedData)}`);
-
-      // publish appended data to AWS IoT
+      // publish data to AWS IoT
       if (type === 'eye')
       {
         let transformedData = {

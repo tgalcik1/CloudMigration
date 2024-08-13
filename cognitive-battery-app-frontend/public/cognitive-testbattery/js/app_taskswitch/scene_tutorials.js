@@ -209,6 +209,7 @@ function scene_tutorial5(){
 let linkRect; 
 let count=0;
 function scene_break() {
+    fullscreen(false);
     draw_character(researcher_2, pos_researcher_x, pos_researcher_y, researcher_width, researcher_width);
     draw_background_bubble(Pos.center_x, pos_bubble_y2, size_bubble_x, size_bubble_y);
     button_start.hide();

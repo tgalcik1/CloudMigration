@@ -115,6 +115,7 @@ function scene_backmask(){
 //   pop();
 // } 
 function scene_end() {
+  fullscreen(false);
   console.log("scene_end called");
   push();
   fill(col_text);

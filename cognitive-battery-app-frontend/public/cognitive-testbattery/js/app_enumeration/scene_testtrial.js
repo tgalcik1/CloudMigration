@@ -265,6 +265,7 @@ function active_button(){
 // }
 
 function scene_end() {
+  fullscreen(false);
   push();
   fill(col_text);
   noStroke();

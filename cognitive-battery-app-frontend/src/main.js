@@ -2,6 +2,8 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router/router';
 import store from './store/store';
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
 import './styles/global.css';
 import './styles/background.scss';
 
@@ -35,4 +37,5 @@ document.addEventListener('DOMContentLoaded', () => {
 const app = createApp(App);
 app.use(router);
 app.use(store);
+app.use(ElementPlus);
 app.mount('#app');
