@@ -137,8 +137,8 @@ export default {
           });
           break;
         case "enumeration":
-          event.data.Userid = this.subjectId; // append subjectid
-          // also need to append computer name
+          event.data.user_id = this.subjectId; // append subjectid
+          event.data.computer_name = '';
 
           delete event.data.command; // don't care about command (task) anymore since we are publishing to specific topics
           console.log("Enumeration results:", event.data);
@@ -149,8 +149,8 @@ export default {
           });
           break;
         case "task-switching":
-          event.data.Userid = this.subjectId;
-          // also need to append computer name
+          event.data.user_id = this.subjectId;
+          event.data.computer_name = '';
 
           delete event.data.command;
           console.log("Task-switching results:", event.data);
@@ -161,8 +161,8 @@ export default {
           });
           break;
         case "working-memory":
-          event.data.Userid = this.subjectId;
-          // also need to append computer name
+          event.data.user_id = this.subjectId;
+          event.data.computer_name = '';
 
           delete event.data.command;
           console.log("Working-memory results:", event.data);

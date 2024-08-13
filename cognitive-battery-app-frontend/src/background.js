@@ -293,7 +293,7 @@ function stopDataCollection(event) {
 function setupPipeServer(pipeName, type) {
   const server = net.createServer((stream) => {
     stream.on('data', (data) => {
-      console.log(`[${type.toUpperCase()} PIPE] ${data}`);
+      //console.log(`[${type.toUpperCase()} PIPE] ${data}`);
       
       // update device status on first data reception
       if (type === 'sensor' && !sensorConnected)
@@ -311,44 +311,46 @@ function setupPipeServer(pipeName, type) {
         });
       }
 
-      // publish data to AWS IoT
-      if (type === 'eye')
-      {
-        let transformedData = {
-          Computer_name: '',
-          Subject_id: subjectId || 'null subjectId',
-          Game_type: currentTask || 'null task',
-          Timestamp: data.Timestamp || 'null timestamp',
-          Gaze_X: data.Gaze_X || 'null gaze_x',
-          Gaze_Y: data.Gaze_Y || 'null gaze_y',
-          Pupil_left: data.Pupil_left || 'null pupil_left',
-          Pupil_right: data.Pupil_right || 'null pupil_right'
-        };
-        sendIotMessage('sensor/eye', transformedData);
-      }
-      else if (type === 'sensor')
-      {
-        let transformedData = {
-          Computer_name: '',
-          Subject_id: subjectId || 'null subjectId',
-          Game_type: currentTask || 'null task',
-          Timestamp: data.Timestamp || 'null timestamp',
-          ecg_data: data.ecg_data || 'null ecg_data',
-          eda_data: data.eda_data || 'null eda_data'
-        };
-        sendIotMessage('sensor/ecg', transformedData);
+      // parse the data into valid JSON
+      // note - sometimes it reads more than one entry from the pipe at a time so i handled it below
+      const decoder = new TextDecoder('utf-8');
+      let jsonString = decoder.decode(data);
+      jsonString = jsonString.replace(/NaN/g, 0);
+      let objects = jsonString.split(/(?<=})\s*(?={)/);
+      
+      objects.forEach(objString => {
+        let validJsonString = objString.replace(/'/g, '"');
+        let jsonData = JSON.parse(validJsonString);
 
-//         [SENSOR PIPE] {"data_type": "Heart_Data", "Timestamp": 1723497476939.4546, "ecg_data": 209.0}
-// {
-//   Computer_name: '',
-//   Subject_id: 'test123',
-//   Game_type: 'Setup',
-//   Timestamp: 'null timestamp',
-//   ecg_data: 'null ecg_data',
-//   eda_data: 'null eda_data'
-// }
-      }
-
+        // publish data to AWS IoT
+        if (type === 'eye')
+        {
+          let transformedData = {
+            timestamp: jsonData.Timestamp || 'null timestamp',
+            computer_name: '',
+            user_id: subjectId || 'null subjectId',
+            game_type: currentTask || 'null task',
+            gaze_x: jsonData.Gaze_X || 0,
+            gaze_y: jsonData.Gaze_Y || 0,
+            pupil_left: jsonData.Pupil_left || 0,
+            pupil_right: jsonData.Pupil_right || 0
+          };
+          //console.log(transformedData)
+          sendIotMessage('sensor/eye', transformedData);
+        }
+        else if (type === 'sensor')
+        {
+          let transformedData = {
+            timestamp: jsonData.Timestamp || 'null timestamp',
+            computer_name: '',
+            user_id: subjectId || 'null subjectId',
+            game_type: currentTask || 'null task',
+            ecg_data: jsonData.ecg_data || 0,
+          };
+          //console.log(transformedData)
+          sendIotMessage('sensor/ecg', transformedData);
+        }
+      })
     });
 
     stream.on('end', () => {
@@ -423,6 +425,7 @@ function disconnectIot(event) {
 
 function sendIotMessage(topic, message) {
   if (device) {
+    console.log(message);
     device.publish(topic, JSON.stringify(message), (err) => {
       if (err) {
         console.error('[IOT] Publish error:', err);

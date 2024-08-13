@@ -55,7 +55,7 @@ class ParameterManager{
       // send current trial data to the parent window
       window.parent.postMessage(
         { command: 'enumeration', 
-          blockno: this.blocks[this.blocks.length - 1],
+          block_no: this.blocks[this.blocks.length - 1],
           difficulty: this.diff[this.diff.length - 1],
           start_time: this.start_time[this.start_time.length - 1],
           end_time: this.end_time[this.end_time.length - 1],

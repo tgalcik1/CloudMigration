@@ -29,8 +29,8 @@
           <div v-else-if="currentStepIndex === 1">
             <p style="margin-top: -16px; margin-bottom: 32px; color: rgb(180, 180, 180)">Please wait while a research assistant checks the signal quality.</p>
             <p style="color: #42b983" v-if="!renderConnectButton() && (this.eyeStatus === 'Eye tracker connected' && this.sensorStatus === 'ECG connected')"><i style="margin-right: 8px" class="fa-regular fa-circle-check"/>ECG and eye tracker connected successfully.</p>
-            <p v-else-if="!renderConnectButton()"><i style="margin-right: 8px" class="fas fa-spinner fa-spin"/>Connecting devices...</p>
-            <p style="color: #e9b453" v-else-if="renderConnectButton()"><i style="margin-right: 8px;" class="fas fa-exclamation-triangle"/>There was an error connecting one or more devices. Please try again.</p>
+            <p v-else-if="!renderRetryButton()"><i style="margin-right: 8px" class="fas fa-spinner fa-spin"/>Connecting devices...</p>
+            <p style="color: #e9b453" v-else-if="renderRetryButton()"><i style="margin-right: 8px;" class="fas fa-exclamation-triangle"/>There was an error connecting one or more devices. Please try again.</p>
           </div>
 
           <!-- other steps -->
@@ -44,8 +44,8 @@
           <div class="navigation-buttons">
             <button @click="previousStep" :disabled="currentStepIndex === 0">Previous</button>
             <button class="connect-button" v-if="currentStepIndex === steps.length - 1" @click="nextStepOrComplete">Complete</button>
-            <button v-else-if="currentStepIndex !== 1 || !renderConnectButton()" @click="nextStepOrComplete" :disabled="!isNextButtonEnabled">Next</button>
-            <button v-if="renderConnectButton() && currentStepIndex == 1" class="connect-button" @click="signalQualityCheck()">Retry</button>
+            <button v-else-if="currentStepIndex !== 1 || (currentStepIndex === 1 && !renderRetryButton())" @click="nextStepOrComplete" :disabled="!isNextButtonEnabled">Next</button>
+            <button v-if="renderRetryButton() && currentStepIndex == 1" class="connect-button" @click="signalQualityCheck()">Retry</button>
           </div>
 
         </div>
@@ -91,7 +91,7 @@ export default {
     },
     isNextButtonEnabled() {
       if (this.currentStepIndex === 0) {
-        return !!this.selectedEcgDevice;
+        return this.selectedEcgDevice;
       }
       if (this.currentStepIndex === 1) {
         return this.sensorStatus === 'ECG connected' && this.eyeStatus === 'Eye tracker connected';
@@ -154,6 +154,11 @@ export default {
       if (this.eyeStatus !== 'Eye tracker connected' && this.eyeStatus !== 'Connecting eye tracker...')
         if (this.sensorStatus !== 'ECG connected' && this.sensorStatus !== 'Connecting ECG sensor...')
           return true;
+      return false;
+    },
+    renderRetryButton(){
+      if ((this.eyeStatus !== 'Eye tracker connected' && this.eyeStatus !== 'Connecting eye tracker...') || (this.sensorStatus !== 'ECG connected' && this.sensorStatus !== 'Connecting ECG sensor...'))
+        return true;
       return false;
     }
   },
