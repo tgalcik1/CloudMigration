@@ -50,6 +50,10 @@
     color: rgba(230,230,230,0.5);
   }
 
+  i{
+    font-size: 18px;
+  }
+
 
   </style>
   

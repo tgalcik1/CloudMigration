@@ -5,6 +5,7 @@
       </button>
     <span>Subject ID: <strong>{{ subjectId }}</strong></span>
     <div class="button-group">
+      <SignalQualityStatus></SignalQualityStatus>
       <IotStatus></IotStatus>
       <button @click="goToHome" id="home-button">
         <i class="fas fa-house"></i>
@@ -18,12 +19,14 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
+import SignalQualityStatus from './SignalQualityStatus.vue';
 import IotStatus from './IotStatus.vue';
 import '@fortawesome/fontawesome-free/css/all.css';
 
 export default {
   components: {
-    IotStatus
+    IotStatus,
+    SignalQualityStatus
   },
   computed: {
     ...mapState(['subjectId'])

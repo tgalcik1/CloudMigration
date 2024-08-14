@@ -272,7 +272,7 @@ function startDataCollection(device, event) {
   const eyeProcess = setupEyeTracker(event);
   const sensorProcess = setupSensor(device, event);
 
-  if (!sensorProcess) {
+  if (!sensorProcess || !eyeProcess) {
     return;
   }
 
@@ -475,7 +475,7 @@ function disconnectIot(event) {
 
 function sendIotMessage(topic, message) {
   if (device) {
-    console.log('[IOT] Sending message: ', message);
+    //console.log('[IOT] Sending message: ', message);
     device.publish(topic, JSON.stringify(message), (err) => {
       if (err) {
         console.error('[IOT] Publish error:', err);
