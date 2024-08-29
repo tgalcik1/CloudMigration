@@ -10,7 +10,7 @@ import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const awsIot = require('aws-iot-device-sdk');
 const fs = require('fs');
-import axios from 'axios';
+// import axios from 'axios'; // will be used for posting survey results to db
 
 let device = null;
 let subjectId = null;
@@ -227,13 +227,13 @@ function setupSensor(ecgDevice, event) {
   switch (ecgDevice) {
     case 'arduino':
       filename = 'record_arduino_sensor_for_exe.exe';
-      const COM_PORT = 'COM4'; // hardcoded
+      const COM_PORT = 'COM4'; // hardcoded, need to identify arduino com port dynamically
       sensorArgs = COM_PORT;
       sensorExitCodes = ARDUINO_EXIT_CODES;
       break;
     case 'movesense':
       filename = 'record_movesense_sensor_for_exe.exe';
-      const END_OF_SERIAL = '234530000211'; // taken from config.bat
+      const END_OF_SERIAL = '234530000211'; // hardcoded (taken from config.bat), need to identify movesense serial dynamically
       sensorArgs = END_OF_SERIAL;
       sensorExitCodes = MOVESENSE_EXIT_CODES;
       break;
@@ -313,7 +313,7 @@ function setupPipeServer(pipeName, type) {
       }
 
       // parse the data into valid JSON
-      // note - sometimes it reads more than one entry from the pipe at a time so i handled it below
+      // note - sometimes it reads more than one entry from the pipe at a time so i handled it below by splitting it first
       const decoder = new TextDecoder('utf-8');
       let jsonString = decoder.decode(data);
       jsonString = jsonString.replace(/NaN/g, 0);

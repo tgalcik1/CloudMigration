@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Signin from '@/views/signin/signin.vue';
 import Home from '@/views/home/home.vue';
-import Presurvey from '@/views/presurvey/presurvey.vue';
+import Presurvey from '@/views/presurvey/presurveys.vue';
 import Setup from '@/views/setup/setup.vue';
 import Baseline from '@/views/baseline/baseline.vue';
 import Video from '@/views/baseline/video.vue';

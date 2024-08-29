@@ -11,7 +11,7 @@ export default {
   name: 'Video',
   data() {
     return {
-      remainingTime: 10, // 60 * 5, // 5 minutes
+      remainingTime: 60 * 5, // 5 minutes
       isVisible: true,
       hueRotation: 0,
       isResetting: false

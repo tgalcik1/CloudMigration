@@ -39,7 +39,7 @@ export default {
             window.api.send('toMain', { command: 'setup-iot' });
             this.$router.push('/');
           });
-        }, 1000); // delay to allow fade-out effect
+        }, 1000); // delay pushing to home route. allows fadeout to finish
       }
     }
   }
