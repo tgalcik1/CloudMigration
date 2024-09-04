@@ -42,7 +42,7 @@
           </div>
 
           <div class="navigation-buttons">
-            <button @click="previousStep" :disabled="currentStepIndex === 0">Previous</button>
+            <button v-if="currentStepIndex !== 0" @click="previousStep" :disabled="currentStepIndex === 0">Previous</button>
             <button class="connect-button" v-if="currentStepIndex === steps.length - 1" @click="nextStepOrComplete">Complete</button>
             <button v-else-if="currentStepIndex !== 1 || (currentStepIndex === 1 && !renderRetryButton())" @click="nextStepOrComplete" :disabled="!isNextButtonEnabled">Next</button>
             <button v-if="renderRetryButton() && currentStepIndex == 1" class="connect-button" @click="signalQualityCheck()">Retry</button>

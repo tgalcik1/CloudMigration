@@ -1,5 +1,6 @@
 <template>
     <div class="survey-wrapper">
+      <p style="max-width: 30vw">{{instructions}}</p>
       <div v-if="questions.length > 0">
         <div class="survey-card">
             <p>{{ currentQuestion.question_text }}</p>
@@ -26,6 +27,11 @@
       </div>
       <div v-else>
         <p>Loading questions...</p>
+        <div class="navigation-buttons">
+          <button @click="handlePrevious">
+            {{ currentQuestionIndex === 0 ? 'Return to Survey List' : 'Previous' }}
+          </button>
+        </div>
       </div>
     </div>
   </template>
@@ -44,6 +50,7 @@
     },
     props: {
       survey: String,
+      instructions: String
     },
     computed: {
       ...mapState({
@@ -132,14 +139,22 @@
   }
 
   button {
-    margin: 5px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: center;
-    font-family: "Monda", sans-serif;
-    transition: background-color 0.3s ease;
-  }
+  margin: 5px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  font-family: "Monda", sans-serif;
+  transition: background-color 0.1s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: rgb(200, 200, 200);
+}
+
+button:disabled{
+  cursor: not-allowed;
+}
   </style>
   

@@ -106,12 +106,12 @@ class TimeManager{
           }else{
             if (flag_break==true){
               // send a message to parent window indicating its time for a post-trial survey
-              window.parent.postMessage({ command: 'break-survey'}, '*');
+              window.parent.postMessage({ command: 'break-survey', task: 'Descartes_WM'}, '*');
               this.scene = this.scene_break;
               button_start.show();
             }else{
               // send a message to parent window indicating that we should display the post-game survey
-              window.parent.postMessage({ command: 'end-survey'}, '*');
+              window.parent.postMessage({ command: 'end-survey', task: 'Descartes_WM'}, '*');
               this.scene = this.end_scene;
               button_end.show();
             }

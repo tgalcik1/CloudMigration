@@ -7,23 +7,53 @@
     <p v-if="!this.currentSurvey">Please complete the following surveys prior to beginning the experiment.</p>
 
     <div class="survey-list" v-if="!this.currentSurvey">
-      <div class="survey-card" v-for="survey in this.surveys" :key="survey.survey_id">
-        {{ survey.survey_id }}
-        <button style="margin-left: 16px" @click="this.currentSurvey = survey.survey_id" v-if="!completedSurveys.includes(survey)">Start</button>
-        <i style="margin-left: 16px" v-else class="fa-regular fa-circle-check"></i>
+      <div 
+        class="survey-card" 
+        v-for="survey in surveys" 
+        :key="survey.survey_id"
+        :class="{
+          'survey-card--gray': !selectedSurveys.includes(survey.survey_id) && !completedSurveys.includes(survey),
+          'survey-card--green': completedSurveys.includes(survey),
+          'survey-card--white': selectedSurveys.includes(survey.survey_id) && !completedSurveys.includes(survey)
+        }"
+      >
+        <div>
+          <input 
+            type="checkbox" 
+            :id="`checkbox-${survey.survey_id}`" 
+            :value="survey.survey_id" 
+            v-model="selectedSurveys" 
+            :disabled="completedSurveys.includes(survey)">
+          <label :for="`checkbox-${survey.survey_id}`">{{ survey.title }}</label>
+        </div>
+        
+        <button 
+          style="margin-left: 16px" 
+          @click="startSurvey(survey)" 
+          v-if="!completedSurveys.includes(survey) && selectedSurveys.includes(survey.survey_id)"
+        >
+          Start
+        </button>
+        
+        <i 
+          style="margin-left: 16px" 
+          v-else-if="completedSurveys.includes(survey)" 
+          class="fa-regular fa-circle-check"
+          :class="{'icon--green': completedSurveys.includes(survey)}"
+        ></i>
       </div>
     </div>
 
     <div v-else>
-      <PreSurveyForm :survey="currentSurvey" @returnToSurveyList="handleReturnToSurveyList" @surveySubmitted="handleSurveySubmitted" />
+      <PreSurveyForm :survey="currentSurvey" :instructions="currentInstructions" @returnToSurveyList="handleReturnToSurveyList" @surveySubmitted="handleSurveySubmitted" />
     </div>
 
     <div v-if="!this.currentSurvey" class="survey-buttons">
-      <button @click="$router.push('/setup')" v-if="surveys.every(survey => completedSurveys.includes(survey))">Continue to Setup</button>
-      <button v-else disabled>Continue to Setup</button>
+      <button @click="$router.push('/setup')" :disabled="!canContinue">Continue to Setup</button>
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from 'axios';
@@ -37,25 +67,44 @@ export default {
     return {
       surveys: [],
       completedSurveys: [],
-      currentSurvey: null
+      selectedSurveys: [],
+      currentSurvey: null,
+      currentInstructions: ''
+    }
+  },
+  computed: {
+    canContinue() {
+      return this.selectedSurveys.every(surveyId => 
+        this.completedSurveys.some(completedSurvey => completedSurvey.survey_id === surveyId)
+      );
     }
   },
   methods: {
     async fetchAllSurveys() {
       try {
         const res = await axios.get(process.env.VUE_APP_SURVEY_API_URL + '/surveys');
-        this.surveys = res.data.filter(survey => survey.active === true);
+        console.log(res.data);
+        this.surveys = res.data.filter(survey => survey.active === true && survey.order === 'Pre-Assessment');
       } catch (error) {
         console.error(error);
         this.$message.error('Failed to fetch surveys');
       }
     },
+    startSurvey(survey) {
+      this.currentSurvey = survey.survey_id;
+      this.currentInstructions = survey.instructions;
+    },
     handleReturnToSurveyList() {
       this.currentSurvey = null;
+      this.currentInstructions = '';
     },
     handleSurveySubmitted() {
-      this.completedSurveys.push(this.surveys.find(survey => survey.survey_id === this.currentSurvey));
+      const completedSurvey = this.surveys.find(survey => survey.survey_id === this.currentSurvey);
+      if (!this.completedSurveys.includes(completedSurvey)) {
+        this.completedSurveys.push(completedSurvey);
+      }
       this.currentSurvey = null;
+      this.currentInstructions = '';
     }
   },
   async mounted() {
@@ -87,6 +136,7 @@ export default {
 
 .survey-buttons button:disabled {
   cursor: not-allowed;
+  background-color: #ddd;
 }
 
 button {
@@ -106,5 +156,21 @@ button {
   justify-content: space-between;
   align-items: center;
   margin: 8px 0;
+}
+
+.survey-card--gray {
+  color: gray;
+}
+
+.survey-card--green {
+  color: #42b983;
+}
+
+.survey-card--white {
+  color: white;
+}
+
+.icon--green {
+  color: #42b983;
 }
 </style>

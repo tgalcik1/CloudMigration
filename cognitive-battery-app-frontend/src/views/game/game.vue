@@ -4,11 +4,42 @@
       <div v-if="isSurveyVisible" class="survey-container">
         <div class="survey-content">
           <h1 style="text-align: center">Post-Survey</h1>
-            <div class="navigation-buttons">
-              <button type="button" @click="prevQuestion" :disabled="isFirstQuestion">Previous</button>
-              <button type="button" @click="nextQuestion" :disabled="!canProceedToNext">Next</button>
-              <button type="submit" :disabled="!canProceedToNext">Submit</button>
+          <div v-if="currentQuestion">
+            <p>{{ currentQuestion.question_text }}</p>
+            <div v-if="currentQuestion.question_type === 'multiple_choice'" class="radio-group">
+              <div v-for="option in currentQuestion.options" :key="option" class="radio-container">
+                <label>
+                  <input
+                    type="radio"
+                    :value="option"
+                    v-model="responses[currentQuestion.question_id]"
+                  />
+                  <div class="radio-label">{{ option }}</div>
+                </label>
+              </div>
             </div>
+          </div>
+          <div class="navigation-buttons">
+            <button type="button" @click="prevQuestion" :disabled="isFirstQuestion">
+              Previous
+            </button>
+            <button
+              v-if="!isLastQuestion"
+              type="button"
+              @click="nextQuestion"
+              :disabled="!canProceedToNext"
+            >
+              Next
+            </button>
+            <button
+              v-if="isLastQuestion"
+              type="submit"
+              :disabled="!canProceedToNext || !allQuestionsAnswered"
+              @click="submitSurvey"
+            >
+              Submit
+            </button>
+          </div>
         </div>
       </div>
     </transition>
@@ -26,17 +57,21 @@
   </div>
 </template>
 
+
+
 <script>
 import { mapState } from "vuex";
+import axios from "axios";
 
 export default {
   name: "GameView",
   data() {
     return {
-      isSurveyVisible: true,
-      surveyAnswers: Array(5).fill(null),
+      isSurveyVisible: false,
+      lastTaskDifficulty: null,
       surveyQuestions: [],
       currentQuestionIndex: 0,
+      responses: {}
     };
   },
   computed: {
@@ -47,6 +82,21 @@ export default {
     gameUrl() {
       return `/cognitive-testbattery/index.html?userID=${this.subjectId}&selectedEcgDevice=${this.selectedEcgDevice}`;
     },
+    currentQuestion() {
+      return this.surveyQuestions[this.currentQuestionIndex] || null;
+    },
+    isFirstQuestion() {
+      return this.currentQuestionIndex === 0;
+    },
+    isLastQuestion() {
+      return this.currentQuestionIndex === this.surveyQuestions.length - 1;
+    },
+    canProceedToNext() {
+      return this.currentQuestion && !!this.responses[this.currentQuestion.question_id];
+    },
+    allQuestionsAnswered() {
+      return this.surveyQuestions.every(question => this.responses[question.question_id]);
+    }
   },
   mounted() {
     this.$refs.gameIframe.addEventListener("load", () => {
@@ -85,6 +135,9 @@ export default {
             topic: "game/enumeration",
             message: event.data,
           });
+          
+          this.lastTaskDifficulty = event.data.difficulty;
+          console.log("Last task difficulty:", this.lastTaskDifficulty);
           break;
         case "task-switching":
           event.data.user_id = this.subjectId;
@@ -97,6 +150,8 @@ export default {
             topic: "game/taskswitch",
             message: event.data,
           });
+          
+          this.lastTaskDifficulty = event.data.difficulty;
           break;
         case "working-memory":
           event.data.user_id = this.subjectId;
@@ -109,23 +164,76 @@ export default {
             topic: "game/workingmemory",
             message: event.data,
           });
+
+          this.lastTaskDifficulty = event.data.difficulty;
           break;
 
         case "break-survey":
-          console.log("Break survey will appear now");
-          //TODO determine which survey to display
-          //TODO fetch the difficulty from the game
+          this.fetchSurveyQuestions(event.data.task);
           this.isSurveyVisible = true;
           break;
 
         case "end-survey":
-          console.log("End survey will appear now");
-          //TODO determine which survey to display
+          this.fetchSurveyQuestions(event.data.task);
           this.isSurveyVisible = true;
           break;
 
         default:
           break;
+      }
+    },
+    async fetchSurveyQuestions(task) {
+      try {
+        const res = await axios.get(process.env.VUE_APP_SURVEY_API_URL + '/surveys/' + task + '/questions');
+        console.log(res.data);
+        this.surveyQuestions = res.data
+          .filter(question => question.active === true)
+          .sort((a, b) => a.order - b.order);
+      } catch (error) {
+        console.error(error);
+        this.$message.error('Failed to fetch survey questions');
+      }
+    },
+    async submitSurvey() {
+      console.log('Submitting survey');
+      try {
+        const answers = Object.keys(this.responses).map(questionId => ({
+          question_id: questionId,
+          answer: this.responses[questionId]
+        }));
+
+        const requestPayload = {
+          user_id: this.subjectId,
+          answers,
+          difficulty_level: this.lastTaskDifficulty
+        };
+
+        console.log(requestPayload)
+
+        const res = await axios.post(`${process.env.VUE_APP_SURVEY_API_URL}/surveys/${this.survey}/responses`, requestPayload);
+        this.$message.success('Survey submitted successfully');
+        console.log(res);
+        this.resetSurvey();
+        this.$emit('surveySubmitted');
+      } catch (error) {
+        console.error(error);
+        this.$message.error('Failed to submit survey');
+      }
+    },
+    resetSurvey() {
+      this.surveyQuestions = [];
+      this.currentQuestionIndex = 0;
+      this.responses = {};
+      this.isSurveyVisible = false;
+    },
+    prevQuestion() {
+      if (this.currentQuestionIndex > 0) {
+        this.currentQuestionIndex--;
+      }
+    },
+    nextQuestion() {
+      if (this.currentQuestionIndex < this.surveyQuestions.length - 1) {
+        this.currentQuestionIndex++;
       }
     },
   },
@@ -157,8 +265,8 @@ export default {
 }
 
 .survey-content {
-  width: 60%;
-  max-width: 800px;
+  width: 65%;
+  max-width: 900px;
   background: white;
   padding: 16px;
   border-radius: 16px;
@@ -174,4 +282,50 @@ export default {
 .fade-leave-to {
   opacity: 0;
 }
+
+.radio-group {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.radio-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.radio-label {
+  margin-top: 4px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+button {
+  margin: 5px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  font-family: "Monda", sans-serif;
+  transition: background-color 0.1s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: rgb(200, 200, 200);
+}
+
+button:disabled{
+  cursor: not-allowed;
+}
+
 </style>
