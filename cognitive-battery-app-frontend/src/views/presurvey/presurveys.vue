@@ -27,8 +27,8 @@
           <label :for="`checkbox-${survey.survey_id}`">{{ survey.title }}</label>
         </div>
         
-        <button 
-          style="margin-left: 16px" 
+        <button class="start-survey-button"
+          style="margin-left: 16px; border-radius: 8px; border: none" 
           @click="startSurvey(survey)" 
           v-if="!completedSurveys.includes(survey) && selectedSurveys.includes(survey.survey_id)"
         >
@@ -156,6 +156,7 @@ button {
   justify-content: space-between;
   align-items: center;
   margin: 8px 0;
+  transition: all 0.3s ease;
 }
 
 .survey-card--gray {
@@ -172,5 +173,14 @@ button {
 
 .icon--green {
   color: #42b983;
+}
+
+.start-survey-button{
+  transition: background-color 0.1s ease;
+}
+
+.start-survey-button:hover{
+  cursor: pointer;
+  background-color: rgb(200,200,200);
 }
 </style>

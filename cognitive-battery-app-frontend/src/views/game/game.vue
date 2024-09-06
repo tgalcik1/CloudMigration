@@ -12,7 +12,7 @@
                   <input
                     type="radio"
                     :value="option"
-                    v-model="responses[currentQuestion.question_id]"
+                    v-model="response"
                   />
                   <div class="radio-label">{{ option }}</div>
                 </label>
@@ -20,24 +20,27 @@
             </div>
           </div>
           <div class="navigation-buttons">
-            <button type="button" @click="prevQuestion" :disabled="isFirstQuestion">
+            <!-- <button type="button" @click="prevQuestion" :disabled="previousQuestionUrl === null">
               Previous
-            </button>
+            </button> -->
+            <div></div>
             <button
-              v-if="!isLastQuestion"
+              v-if="!isLast"
               type="button"
-              @click="nextQuestion"
-              :disabled="!canProceedToNext"
+              @click="handleNext"
+              :disabled="!response || loading"
             >
-              Next
+              <i v-if="loading" class="fas fa-spinner fa-pulse"></i>
+              <span v-else>Next</span>
             </button>
             <button
-              v-if="isLastQuestion"
+              v-if="isLast"
               type="submit"
-              :disabled="!canProceedToNext || !allQuestionsAnswered"
+              :disabled="!response || loading"
               @click="submitSurvey"
             >
-              Submit
+              <i v-if="loading" class="fas fa-spinner fa-pulse"></i>
+              <span v-else>Submit</span>
             </button>
           </div>
         </div>
@@ -57,8 +60,6 @@
   </div>
 </template>
 
-
-
 <script>
 import { mapState } from "vuex";
 import axios from "axios";
@@ -67,11 +68,15 @@ export default {
   name: "GameView",
   data() {
     return {
+      currentSurvey: null,
       isSurveyVisible: false,
       lastTaskDifficulty: null,
-      surveyQuestions: [],
-      currentQuestionIndex: 0,
-      responses: {}
+      currentQuestion: null,
+      response: null,
+      nextQuestionUrl: null,
+      previousQuestionUrl: null,
+      isLast: false,
+      loading: false, // Added loading state
     };
   },
   computed: {
@@ -82,21 +87,6 @@ export default {
     gameUrl() {
       return `/cognitive-testbattery/index.html?userID=${this.subjectId}&selectedEcgDevice=${this.selectedEcgDevice}`;
     },
-    currentQuestion() {
-      return this.surveyQuestions[this.currentQuestionIndex] || null;
-    },
-    isFirstQuestion() {
-      return this.currentQuestionIndex === 0;
-    },
-    isLastQuestion() {
-      return this.currentQuestionIndex === this.surveyQuestions.length - 1;
-    },
-    canProceedToNext() {
-      return this.currentQuestion && !!this.responses[this.currentQuestion.question_id];
-    },
-    allQuestionsAnswered() {
-      return this.surveyQuestions.every(question => this.responses[question.question_id]);
-    }
   },
   mounted() {
     this.$refs.gameIframe.addEventListener("load", () => {
@@ -110,6 +100,11 @@ export default {
     });
 
     window.addEventListener("message", this.handleIframeMessage);
+
+    // for easy testing 
+    // this.currentSurvey = 'Descartes_Enumeration'
+    // this.postFirstResponse(this.currentSurvey);
+    // this.isSurveyVisible = true;
   },
   beforeUnmount() {
     window.removeEventListener("message", this.handleIframeMessage);
@@ -169,12 +164,14 @@ export default {
           break;
 
         case "break-survey":
-          this.fetchSurveyQuestions(event.data.task);
+          this.currentSurvey = event.data.task;
+          this.postFirstResponse(this.currentSurvey);
           this.isSurveyVisible = true;
           break;
 
         case "end-survey":
-          this.fetchSurveyQuestions(event.data.task);
+          this.currentSurvey = event.data.task;
+          this.postFirstResponse(this.currentSurvey);
           this.isSurveyVisible = true;
           break;
 
@@ -182,59 +179,75 @@ export default {
           break;
       }
     },
-    async fetchSurveyQuestions(task) {
+    async postFirstResponse(task) {
       try {
-        const res = await axios.get(process.env.VUE_APP_SURVEY_API_URL + '/surveys/' + task + '/questions');
-        console.log(res.data);
-        this.surveyQuestions = res.data
-          .filter(question => question.active === true)
-          .sort((a, b) => a.order - b.order);
-      } catch (error) {
-        console.error(error);
-        this.$message.error('Failed to fetch survey questions');
-      }
-    },
-    async submitSurvey() {
-      console.log('Submitting survey');
-      try {
-        const answers = Object.keys(this.responses).map(questionId => ({
-          question_id: questionId,
-          answer: this.responses[questionId]
-        }));
-
-        const requestPayload = {
+        this.loading = true; // Start loading
+        const res = await axios.post(`${process.env.VUE_APP_SURVEY_API_URL}/surveys/${task}/responses`, {
           user_id: this.subjectId,
-          answers,
-          difficulty_level: this.lastTaskDifficulty
-        };
-
-        console.log(requestPayload)
-
-        const res = await axios.post(`${process.env.VUE_APP_SURVEY_API_URL}/surveys/${this.survey}/responses`, requestPayload);
-        this.$message.success('Survey submitted successfully');
-        console.log(res);
-        this.resetSurvey();
-        this.$emit('surveySubmitted');
+        });
+        console.log(res)
+        this.currentQuestion = res.data.question;
+        this.isLast = res.data.completed || false;
+        this.previousQuestionUrl = null;
+        this.response = null;
       } catch (error) {
-        console.error(error);
-        this.$message.error('Failed to submit survey');
+        console.error("Failed to fetch the first question", error);
+      } finally {
+        this.loading = false; // End loading
       }
     },
-    resetSurvey() {
-      this.surveyQuestions = [];
-      this.currentQuestionIndex = 0;
-      this.responses = {};
-      this.isSurveyVisible = false;
+    async putNextResponse() {
+      try {
+        this.loading = true; // Start loading
+        const res = await axios.put(`${process.env.VUE_APP_SURVEY_API_URL}/surveys/${this.currentSurvey}/responses`, {
+          user_id: this.subjectId,
+          question_id: this.currentQuestion?.question_id,
+          answer: this.response,
+          difficulty_level: this.lastTaskDifficulty
+        });
+        console.log(res)
+        if (res.data.completed && res.data.question === null) {
+          this.isLast = true;
+          this.submitSurvey();
+        } else {
+          this.currentQuestion = res.data.question;
+          this.isLast = res.data.completed || false;
+          this.previousQuestionUrl = res.data.previous_question_url || null;
+          this.nextQuestionUrl = res.data.next_question_url || null;
+          this.response = null;
+        }
+      } catch (error) {
+        console.error("Failed to submit response and fetch the next question", error);
+      } finally {
+        this.loading = false; // End loading
+      }
+    },
+    async handleNext() {
+      if (this.response && !this.loading) {
+        await this.putNextResponse();
+        if (this.isLast) {
+          this.submitSurvey();
+        }
+      }
     },
     prevQuestion() {
-      if (this.currentQuestionIndex > 0) {
-        this.currentQuestionIndex--;
+      if (this.previousQuestionUrl && !this.loading) {
+        this.fetchNextQuestion(this.previousQuestionUrl);
       }
     },
-    nextQuestion() {
-      if (this.currentQuestionIndex < this.surveyQuestions.length - 1) {
-        this.currentQuestionIndex++;
-      }
+    submitSurvey() {
+      this.$message.success("Survey submitted successfully");
+      this.resetSurvey();
+      this.$emit("surveySubmitted");
+    },
+    resetSurvey() {
+      this.currentSurvey = null;
+      this.currentQuestion = null;
+      this.response = null;
+      this.isSurveyVisible = false;
+      this.previousQuestionUrl = null;
+      this.nextQuestionUrl = null;
+      this.isLast = false;
     },
   },
 };

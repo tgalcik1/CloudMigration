@@ -1,123 +1,129 @@
 <template>
-    <div class="survey-wrapper">
-      <p style="max-width: 30vw">{{instructions}}</p>
-      <div v-if="questions.length > 0">
-        <div class="survey-card">
-            <p>{{ currentQuestion.question_text }}</p>
-            <div v-if="currentQuestion.question_type === 'multiple_choice'">
-            <div v-for="(option, index) in currentQuestion.options" :key="index">
-                <label>
-                <input type="radio" :name="`question_${currentQuestion.question_id}`" :value="option" v-model="responses[currentQuestion.question_id]">
-                {{ option }}
-                </label>
-            </div>
-            </div>
-            <div v-else-if="currentQuestion.question_type === 'textbox'">
-            <input type="text" :placeholder="currentQuestion.question_text" v-model="responses[currentQuestion.question_id]" />
-            </div>
+  <div class="survey-wrapper">
+    <p style="display: flex; justify-content: center; align-items: center; text-align:justify; max-width: 30vw">{{ instructions }}</p>
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;" v-if="currentQuestion">
+      <div class="survey-card">
+        <p>{{ currentQuestion.question_text }}</p>
+        <div v-if="currentQuestion.question_type === 'multiple_choice'">
+          <div v-for="(option, index) in currentQuestion.options" :key="index">
+            <label>
+              <input
+                type="radio"
+                :name="`question_${currentQuestion.question_id}`"
+                :value="option"
+                v-model="response"
+              />
+              {{ option }}
+            </label>
+          </div>
         </div>
-        <div class="navigation-buttons">
-          <button @click="handlePrevious">
-            {{ currentQuestionIndex === 0 ? 'Return to Survey List' : 'Previous' }}
-          </button>
-          <button @click="handleNext">
-            {{ currentQuestionIndex === questions.length - 1 ? 'Submit' : 'Next' }}
-          </button>
+        <div v-else-if="currentQuestion.question_type === 'textbox'">
+          <input
+            type="text"
+            placeholder="Response"
+            v-model="response"
+          />
         </div>
       </div>
-      <div v-else>
-        <p>Loading questions...</p>
-        <div class="navigation-buttons">
-          <button @click="handlePrevious">
-            {{ currentQuestionIndex === 0 ? 'Return to Survey List' : 'Previous' }}
-          </button>
-        </div>
+      <div class="navigation-buttons">
+        <button style="width: 100px" @click="handleNext" :disabled="!response || loading">
+          <i v-if="loading" class="fas fa-spinner fa-pulse"></i>
+          <span v-else>{{ isLast ? 'Submit' : 'Next' }}</span>
+        </button>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import axios from 'axios';
-  import { mapState } from "vuex";
-  
-  export default {
-    data() {
-      return {
-        questions: [],
-        currentQuestionIndex: 0,
-        responses: {}
-      };
-    },
-    props: {
-      survey: String,
-      instructions: String
-    },
-    computed: {
-      ...mapState({
-        subjectId: (state) => state.subjectId,
-        selectedEcgDevice: (state) => state.selectedEcgDevice,
-      }),
-      currentQuestion() {
-        return this.questions[this.currentQuestionIndex];
+    <div v-else>
+      <p>Loading question...</p>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+import { mapState } from "vuex";
+
+export default {
+  data() {
+    return {
+      currentQuestion: null,
+      response: null,
+      isLast: false,
+      loading: false,
+    };
+  },
+  props: {
+    survey: String,
+    instructions: String,
+  },
+  computed: {
+    ...mapState({
+      subjectId: (state) => state.subjectId,
+    }),
+  },
+  methods: {
+    // POST to start survey and get first question
+    async postFirstResponse() {
+      try {
+        this.loading = true; // disable button while loading
+        const surveyUrl = process.env.VUE_APP_SURVEY_API_URL + `/surveys/${this.survey}/responses`;
+        const res = await axios.post(surveyUrl, {
+          user_id: this.subjectId
+        });
+        this.currentQuestion = res.data.question;
+        this.isLast = res.data.completed || false;
+        this.response = null;
+      } catch (error) {
+        console.error('Failed to fetch the first question', error);
+      } finally {
+        this.loading = false; // re-enable button after loading
       }
     },
-    methods: {
-      async fetchSurveyQuestions() {
-        try {
-          const res = await axios.get(process.env.VUE_APP_SURVEY_API_URL + '/surveys/' + this.survey + '/questions');
-          this.questions = res.data
-            .filter(question => question.active === true)
-            .sort((a, b) => a.order - b.order);
-        } catch (error) {
-          console.error(error);
-          this.$message.error('Failed to fetch survey questions');
-        }
-      },
-      async handleNext() {
-        if (this.currentQuestionIndex < this.questions.length - 1) {
-          this.currentQuestionIndex++;
+
+    // PUT to submit answer and fetch next question
+    async putNextResponse() {
+      try {
+        this.loading = true; // disable button while loading
+        const surveyUrl = process.env.VUE_APP_SURVEY_API_URL + `/surveys/${this.survey}/responses`;
+        const res = await axios.put(surveyUrl, {
+          user_id: this.subjectId,
+          question_id: this.currentQuestion.question_id,
+          answer: this.response
+        });
+        this.currentQuestion = res.data.question;
+        this.isLast = res.data.completed || false;
+        this.response = null;
+      } catch (error) {
+        console.error('Failed to submit response and fetch the next question', error);
+      } finally {
+        this.loading = false; // re-enable button after loading
+      }
+    },
+
+    async handleNext() {
+      if (this.response && !this.loading) {
+        // POST for first question
+        if (!this.currentQuestion.question_id) {
+          await this.postFirstResponse();
         } else {
-          await this.submitSurvey();
+          // PUT for following questions
+          await this.putNextResponse();
         }
-      },
-      handlePrevious() {
-        if (this.currentQuestionIndex === 0) {
-          this.$emit('returnToSurveyList');
-        } else {
-          this.currentQuestionIndex--;
-        }
-      },
-      async submitSurvey() {
-        console.log('submitting survey')
-        try {
-          const answers = Object.keys(this.responses).map(questionId => ({
-            question_id: questionId,
-            answer: this.responses[questionId]
-          }));
-  
-          const requestPayload = {
-            user_id: this.subjectId,
-            answers,
-            difficulty_level: null // unused for presurveys
-          };
-  
-          const res = await axios.post(process.env.VUE_APP_SURVEY_API_URL + '/surveys/' + this.survey + '/responses', requestPayload);
-          console.log(res);
+
+        // check for last question
+        if (this.isLast) {
           this.$message.success('Survey submitted successfully');
           this.$emit('surveySubmitted');
-        } catch (error) {
-          console.error(error);
-          this.$message.error('Failed to submit survey');
         }
       }
     },
-    async mounted() {
-      await this.fetchSurveyQuestions();
-    }
-  };
-  </script>
+  },
+  async mounted() {
+    await this.postFirstResponse();
+  },
+};
+</script>
   
-  <style scoped>
+<style scoped>
   .survey-wrapper {
     margin: 20px;
   }
@@ -132,29 +138,29 @@
 
   .navigation-buttons {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     margin-top: 20px;
     margin-left: 12px;
     margin-right: 12px;
   }
 
   button {
-  margin: 5px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  cursor: pointer;
-  text-align: center;
-  font-family: "Monda", sans-serif;
-  transition: background-color 0.1s ease;
-}
+    margin: 5px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    font-family: "Monda", sans-serif;
+    transition: background-color 0.1s ease;
+  }
 
-button:hover:not(:disabled) {
-  background-color: rgb(200, 200, 200);
-}
+  button:hover:not(:disabled) {
+    background-color: rgb(200, 200, 200);
+  }
 
-button:disabled{
-  cursor: not-allowed;
-}
-  </style>
+  button:disabled{
+    cursor: not-allowed;
+  }
+</style>
   
