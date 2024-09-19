@@ -4,7 +4,7 @@
       <h1>Welcome</h1>
       <p>Welcome to the study, and thank you for your participation.</p>
       <p>You will be guided through various preliminary steps before beginning the main experiment.</p>
-      <router-link to="/presurvey" class="start-button">Start</router-link>
+      <router-link to="/surveys" class="start-button">Start</router-link>
     </div>
   </div>
 </template>

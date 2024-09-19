@@ -1,10 +1,10 @@
 <template>
   <div class="presurvey-wrapper">
     <h1 style="text-align: center; cursor: pointer;">
-      Pre-Survey
+      Surveys
     </h1>
 
-    <p v-if="!this.currentSurvey">Please complete the following surveys prior to beginning the experiment.</p>
+    <p v-if="!this.currentSurvey">Please complete the following surveys.</p>
 
     <div class="survey-list" v-if="!this.currentSurvey">
       <div 
@@ -49,7 +49,7 @@
     </div>
 
     <div v-if="!this.currentSurvey" class="survey-buttons">
-      <button @click="$router.push('/setup')" :disabled="!canContinue">Continue to Setup</button>
+      <button @click="performLogout" :disabled="!canContinue">Finish Study</button>
     </div>
   </div>
 </template>
@@ -57,6 +57,7 @@
 
 <script>
 import axios from 'axios';
+import { mapActions } from 'vuex';
 import PreSurveyForm from './components/PreSurveyForm.vue';
 
 export default {
@@ -80,6 +81,10 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['logout']),
+    performLogout() {
+      this.logout();
+    },
     async fetchAllSurveys() {
       try {
         const res = await axios.get(process.env.VUE_APP_SURVEY_API_URL + '/surveys');

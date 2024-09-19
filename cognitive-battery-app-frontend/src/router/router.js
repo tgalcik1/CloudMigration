@@ -23,12 +23,6 @@ const routes = [
     meta: { hidden: true }
   },
   {
-    path: '/presurvey',
-    name: 'Pre-Survey',
-    component: Presurvey,
-    meta: { requiresAuth: true, icon: 'fas fa-square-poll-horizontal' }
-  },
-  {
     path: '/setup',
     name: 'Setup',
     component: Setup,
@@ -57,7 +51,13 @@ const routes = [
     name: 'Game',
     component: GameView,
     meta: { requiresAuth: true, icon: 'fas fa-gamepad' }
-  }
+  },
+  {
+    path: '/surveys',
+    name: 'Surveys',
+    component: Presurvey,
+    meta: { requiresAuth: true, icon: 'fas fa-square-poll-horizontal' }
+  },
 ];
 
 const router = createRouter({

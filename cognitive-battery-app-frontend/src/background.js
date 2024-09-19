@@ -386,6 +386,13 @@ function setupPipeServer(pipeName, type) {
               game_type: currentTask || 'null task',
               ecg_data: jsonData.ecg_data || 0,
             };
+
+            // get arduino snr from ecg_data and pass to renderer
+            let snr = jsonData.ecg_data['snr'];
+            BrowserWindow.getAllWindows().forEach(win => {
+              win.webContents.send('fromMain', { signalStrength: snr });
+            });
+
             //console.log(transformedData)
             sendIotMessage('sensor/ecg', transformedData);
           }
