@@ -1,6 +1,6 @@
 <template>
   <div class="status-container">
-    <p v-if="sensorStatus === 'ECG connected'" :style="{ color: signalColor }" class="status-text">{{ signalStrength }} dB</p>
+    <p v-if="sensorStatus === 'ECG connected' && signalStrength !== -1" :style="{ color: signalColor }" class="status-text">{{ signalStrength }} dB</p>
   </div>
 </template>
 
@@ -33,8 +33,8 @@ export default {
       const startColor = { r: 255, g: 0, b: 0 };
       const endColor = { r: 0, g: 255, b: 0 };
 
-      const minStrength = -100;
-      const maxStrength = 0;
+      const minStrength = 0;
+      const maxStrength = 4;
 
       const ratio = (signalStrength - minStrength) / (maxStrength - minStrength);
       const clampedRatio = Math.max(0, Math.min(ratio, 1));
