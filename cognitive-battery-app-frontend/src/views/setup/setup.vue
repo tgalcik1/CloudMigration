@@ -143,9 +143,10 @@ export default {
       window.api.send('toMain', { command: 'start-data-collection', subjectId, device: selectedEcgDevice, task: 'signal-quality-check' });
 
       // receive data from main - maybe some sort of indication of signal quality if possible?
-      await window.api.receive('fromMain', (data) => {
-        console.log(data);
-      });
+      // update 9/20/24 this is being done in SignalQualityStatus.vue
+      // await window.api.receive('fromMain', (data) => {
+      //   console.log(data);
+      // });
     },
     async disconnectDevices() {
       window.api.send('toMain', { command: 'stop-data-collection' });

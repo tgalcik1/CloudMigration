@@ -388,7 +388,7 @@ function setupPipeServer(pipeName, type) {
             };
 
             // get arduino snr from ecg_data and pass to renderer
-            let snr = jsonData.ecg_data['snr'];
+            let snr = jsonData.snr_values;
             BrowserWindow.getAllWindows().forEach(win => {
               win.webContents.send('fromMain', { signalStrength: snr });
             });
