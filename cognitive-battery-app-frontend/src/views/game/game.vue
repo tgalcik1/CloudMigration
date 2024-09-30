@@ -76,7 +76,7 @@ export default {
       nextQuestionUrl: null,
       previousQuestionUrl: null,
       isLast: false,
-      loading: false, // Added loading state
+      loading: false,
     };
   },
   computed: {
@@ -181,7 +181,7 @@ export default {
     },
     async postFirstResponse(task) {
       try {
-        this.loading = true; // Start loading
+        this.loading = true;
         const res = await axios.post(`${process.env.VUE_APP_SURVEY_API_URL}/surveys/${task}/responses`, {
           user_id: this.subjectId,
         });
@@ -193,18 +193,20 @@ export default {
       } catch (error) {
         console.error("Failed to fetch the first question", error);
       } finally {
-        this.loading = false; // End loading
+        this.loading = false;
       }
     },
     async putNextResponse() {
       try {
-        this.loading = true; // Start loading
+        this.loading = true;
         const res = await axios.put(`${process.env.VUE_APP_SURVEY_API_URL}/surveys/${this.currentSurvey}/responses`, {
           user_id: this.subjectId,
           question_id: this.currentQuestion?.question_id,
           answer: this.response,
-          difficulty_level: this.lastTaskDifficulty
+          difficulty_level: this.lastTaskDifficulty // difficulty is given per survey question response here.
         });
+        console.log("Last difficulty: " + this.lastTaskDifficulty)
+
         console.log(res)
         if (res.data.completed && res.data.question === null) {
           this.isLast = true;
@@ -219,7 +221,7 @@ export default {
       } catch (error) {
         console.error("Failed to submit response and fetch the next question", error);
       } finally {
-        this.loading = false; // End loading
+        this.loading = false;
       }
     },
     async handleNext() {

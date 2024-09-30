@@ -269,10 +269,17 @@ function setupSensor(ecgDevice, event) {
 }
 
 function startDataCollection(device, event) {
-  const eyeProcess = setupEyeTracker(event);
-  const sensorProcess = setupSensor(device, event);
+  let eyeProcess;
+  if (!eyeConnected){
+    eyeProcess = setupEyeTracker(event);
+  }
 
-  if (!sensorProcess || !eyeProcess) {
+  let sensorProcess;
+  if (!sensorConnected){
+    sensorProcess = setupSensor(device, event);
+  }
+
+  if ((!sensorConnected && !sensorProcess) || (!eyeConnected && !eyeProcess)) {
     return;
   }
 
@@ -286,7 +293,7 @@ function startDataCollection(device, event) {
 
 function stopDataCollection(event) {
   exec('taskkill /f /im record_eye_for_exe.exe');
-  exec('taskkill /f /im record_sensor_for_exe.exe');
+  exec('taskkill /f /im record_arduino_sensor_for_exe.exe');
   exec('taskkill /f /im record_movesense_sensor_for_exe.exe');
   event.reply('fromMain', { sensorStatus: 'ECG disconnected', eyeStatus: 'Eye tracker disconnected' });
 }
@@ -410,7 +417,7 @@ function setupPipeServer(pipeName, type) {
       if (type === 'eye'){
         eyeConnected = false;
         BrowserWindow.getAllWindows().forEach(win => {
-          win.webContents.send('fromMain', { sensorStatus: 'Eye tracker disconnected' });
+          win.webContents.send('fromMain', { eyeStatus: 'Eye tracker disconnected' });
         });
       } 
       console.log(`[${type.toUpperCase()} PIPE] End of data`);

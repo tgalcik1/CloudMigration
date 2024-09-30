@@ -31,6 +31,8 @@
   </template>
   
   <script>
+  // NOTE - this form is not used for the game surveys, thus difficulty is unused here.
+  // game surveys are handled as an overlay dialog in game.vue
   import axios from 'axios';
   import { mapState } from "vuex";
   
