@@ -102,6 +102,7 @@ export default {
     window.addEventListener("message", this.handleIframeMessage);
 
     // for easy testing 
+    // this.lastTaskDifficulty = 'Medium';
     // this.currentSurvey = 'Descartes_Enumeration'
     // this.postFirstResponse(this.currentSurvey);
     // this.isSurveyVisible = true;

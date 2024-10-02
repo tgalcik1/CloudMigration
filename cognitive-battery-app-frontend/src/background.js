@@ -338,10 +338,12 @@ function setupPipeServer(pipeName, type) {
             computer_name: '',
             user_id: subjectId || 'null subjectId',
             game_type: currentTask || 'null task',
-            gaze_x: jsonData.Gaze_X || 0,
-            gaze_y: jsonData.Gaze_Y || 0,
-            pupil_left: jsonData.Pupil_left || 0,
-            pupil_right: jsonData.Pupil_right || 0
+            eye_data: {
+              gaze_x: jsonData.Gaze_X || 0,
+              gaze_y: jsonData.Gaze_Y || 0,
+              pupil_left: jsonData.Pupil_left || 0,
+              pupil_right: jsonData.Pupil_right || 0
+            }
           };
           //console.log(transformedData)
           sendIotMessage('sensor/eye', transformedData);
