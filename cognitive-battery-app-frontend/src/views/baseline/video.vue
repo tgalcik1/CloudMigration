@@ -53,12 +53,12 @@ export default {
       this.$refs.videoWrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
     },
     startHueRotation() {
-      this.hueInterval = setInterval(() => {
-        if (!this.isResetting) {
-          this.hueRotation = (this.hueRotation + 1) % 360;
-          this.$refs.videoWrapper.style.backdropFilter = `hue-rotate(${this.hueRotation}deg)`;
-        }
-      }, 100);
+      // this.hueInterval = setInterval(() => {
+      //   if (!this.isResetting) {
+      //     this.hueRotation = (this.hueRotation + 1) % 360;
+      //     this.$refs.videoWrapper.style.backdropFilter = `hue-rotate(${this.hueRotation}deg)`;
+      //   }
+      // }, 100);
     },
     startSmoothReset() {
       this.isResetting = true;

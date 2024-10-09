@@ -29,3 +29,5 @@ node_modules
 cognitive-battery-app-frontend/public/cognitive-testbattery/data
 
 .env.production
+
+cognitive-battery-app-frontend/dist_electron/cached_data

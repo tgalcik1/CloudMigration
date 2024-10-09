@@ -295,15 +295,50 @@ function stopDataCollection(event) {
   exec('taskkill /f /im record_eye_for_exe.exe');
   exec('taskkill /f /im record_arduino_sensor_for_exe.exe');
   exec('taskkill /f /im record_movesense_sensor_for_exe.exe');
-  event.reply('fromMain', { sensorStatus: 'ECG disconnected', eyeStatus: 'Eye tracker disconnected' });
+  if (event) {
+    event.reply('fromMain', { sensorStatus: 'ECG disconnected', eyeStatus: 'Eye tracker disconnected' });
+  }
 }
 
 function setupPipeServer(pipeName, type) {
   const server = net.createServer((stream) => {
+    let dataBuffer = [];
+    
+    // Create directories if they don't exist
+    const dirPath = path.join(__dirname, 'cached_data', type);
+    if (!fs.existsSync(dirPath)){
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+
+    // Create write stream in the appropriate directory
+    let filePath = path.join(dirPath, `${type}_data_${Date.now()}.jsonl`);
+    let writeStream = fs.createWriteStream(filePath, { flags: 'a' });
+
+    let timer = setInterval(() => {
+      if (dataBuffer.length > 0) {
+        let dataToSend = dataBuffer.slice();
+        dataBuffer = [];
+
+        // Group data by topic
+        let dataByTopic = {};
+        dataToSend.forEach(({ topic, data }) => {
+          if (!dataByTopic[topic]) {
+            dataByTopic[topic] = [];
+          }
+          dataByTopic[topic].push(data);
+        });
+
+        // Send data for each topic
+        for (let topic in dataByTopic) {
+          let entries = dataByTopic[topic].length;
+          console.log(`[DATA SEND] Sent ${entries} entries to topic ${topic}`);
+          sendIotMessage(topic, dataByTopic[topic]);
+        }
+      }
+    }, 1000);
+
     stream.on('data', (data) => {
-      //console.log(`[${type.toUpperCase()} PIPE] ${data}`);
-      
-      // update device status on first data reception
+      // Update device status on first data reception
       if (type === 'sensor' && !sensorConnected)
       {
         sensorConnected = true;
@@ -319,8 +354,6 @@ function setupPipeServer(pipeName, type) {
         });
       }
 
-      // parse the data into valid JSON
-      // note - sometimes it reads more than one entry from the pipe at a time so i handled it below by splitting it first
       const decoder = new TextDecoder('utf-8');
       let jsonString = decoder.decode(data);
       jsonString = jsonString.replace(/NaN/g, 0);
@@ -330,10 +363,11 @@ function setupPipeServer(pipeName, type) {
         let validJsonString = objString.replace(/'/g, '"');
         let jsonData = JSON.parse(validJsonString);
 
-        // publish data to AWS IoT
-        if (type === 'eye')
-        {
-          let transformedData = {
+        let transformedData;
+        let topic;
+
+        if (type === 'eye') {
+          transformedData = {
             timestamp: jsonData.Timestamp || 'null timestamp',
             computer_name: '',
             user_id: subjectId || 'null subjectId',
@@ -345,29 +379,25 @@ function setupPipeServer(pipeName, type) {
               pupil_right: jsonData.Pupil_right || 0
             }
           };
-          //console.log(transformedData)
-          sendIotMessage('sensor/eye', transformedData);
-        }
-        else if (type === 'sensor')
+          topic = 'sensor/eye';
+        } else if (type === 'sensor')
         {
-          // movesense ecg
           if (currentEcgDevice === 'movesense')
           {
-            // heart data
             if (jsonData.data_type === 'Heart_Data')
             {
-              let transformedData = {
+              transformedData = {
                 timestamp: jsonData.Timestamp || 'null timestamp',
                 computer_name: '',
                 user_id: subjectId || 'null subjectId',
                 game_type: currentTask || 'null task',
                 ecg_data: jsonData.ecg_data || 0,
               };
-              sendIotMessage('sensor/ecg', transformedData);
+              topic = 'sensor/ecg';
             }
-            // IMU9 data
-            else if (jsonData.data_type === 'IMU9') {
-              let transformedData = {
+            else if (jsonData.data_type === 'IMU9')
+            {
+              transformedData = {
                 timestamp: jsonData.Timestamp || 'null timestamp',
                 computer_name: '',
                 user_id: subjectId || 'null subjectId',
@@ -382,34 +412,39 @@ function setupPipeServer(pipeName, type) {
                 magn_y: jsonData.magn_y || 0,
                 magn_z: jsonData.magn_z || 0
               };
-              sendIotMessage('sensor/imu9', transformedData);
+              topic = 'sensor/imu9';
             }
           }
-          // arduino ecg
           else
           {
-            let transformedData = {
+            // Arduino ECG
+            transformedData = {
               timestamp: jsonData.Timestamp || 'null timestamp',
               computer_name: '',
               user_id: subjectId || 'null subjectId',
               game_type: currentTask || 'null task',
               ecg_data: jsonData.ecg_data || 0,
             };
+            topic = 'sensor/ecg';
 
             // get arduino snr from ecg_data and pass to renderer
             let snr = jsonData.snr_values;
             BrowserWindow.getAllWindows().forEach(win => {
               win.webContents.send('fromMain', { signalStrength: snr });
             });
-
-            //console.log(transformedData)
-            sendIotMessage('sensor/ecg', transformedData);
           }
         }
-      })
+
+        if (transformedData) {
+          dataBuffer.push({ topic, data: transformedData });
+          writeStream.write(JSON.stringify(transformedData) + '\n');
+        }
+      });
     });
 
     stream.on('end', () => {
+      clearInterval(timer);
+      writeStream.end();
       if (type === 'sensor'){
         sensorConnected = false;
         BrowserWindow.getAllWindows().forEach(win => {
@@ -423,6 +458,15 @@ function setupPipeServer(pipeName, type) {
         });
       } 
       console.log(`[${type.toUpperCase()} PIPE] End of data`);
+    });
+
+    stream.on('error', (err) => {
+      console.error(`[${type.toUpperCase()} PIPE] Stream error:`, err);
+      clearInterval(timer);
+      writeStream.end();
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('fromMain', { [`${type}PipeError`]: err.message });
+      });
     });
   });
 
@@ -481,7 +525,7 @@ function disconnectIot(event) {
   if (device) {
     device.end(true, () => {
       console.log('[IOT] Disconnected from AWS IoT');
-      event.reply('fromMain', { iotStatus: 'IoT disconnected' });
+      if (event) event.reply('fromMain', { iotStatus: 'IoT disconnected' });
       device = null;
     });
   } else {
@@ -491,12 +535,11 @@ function disconnectIot(event) {
 
 function sendIotMessage(topic, message) {
   if (device) {
-    //console.log('[IOT] Sending message: ', message);
     device.publish(topic, JSON.stringify(message), (err) => {
       if (err) {
         console.error('[IOT] Publish error:', err);
       } else {
-        //console.log('[IOT] Message sent to topic:', topic);
+        // console.log('[IOT] Message sent to topic:', topic);
       }
     });
   } else {
