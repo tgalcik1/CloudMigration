@@ -1,4 +1,0 @@
-ecgvisualizer: local visualize (old)
-record_eye: recording pupil using tobi
-record_sensor: recording ecg using arduino (old)
-record_movesense_sensor: recording ecg using movesense 
